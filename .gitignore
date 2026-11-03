@@ -1,0 +1,112 @@
+# ==========================================
+# Byte-compiled / optimized / Python artifacts
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# ==========================================
+# Datasets & Raw Media (Phase 1)
+# ==========================================
+# Ignore raw archives and downloaded dataset contents
+phase1-vision/data/raw/*
+!phase1-vision/data/raw/.gitkeep
+
+# Ignore training/validation image sets and label txt files
+phase1-vision/data/dataset/images/train/*
+!phase1-vision/data/dataset/images/train/.gitkeep
+phase1-vision/data/dataset/images/val/*
+!phase1-vision/data/dataset/images/val/.gitkeep
+phase1-vision/data/dataset/labels/train/*
+!phase1-vision/data/dataset/labels/train/.gitkeep
+phase1-vision/data/dataset/labels/val/*
+!phase1-vision/data/dataset/labels/val/.gitkeep
+
+# Ignore general dataset archives
+*.zip
+*.tar
+*.gz
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# ==========================================
+# Machine Learning Weights & Training Runs
+# ==========================================
+# PyTorch and YOLO model weights
+*.pt
+*.pth
+*.onnx
+*.engine
+*.npy
+runs/
+wandb/
+.neptune/
+
+# Exported mobile models (Phase 1 & Phase 2)
+# Keep the directory structure tracked via .gitkeep
+phase1-vision/models/exported/*
+!phase1-vision/models/exported/.gitkeep
+*.tflite
+*.pte
+*.bin
+
+# ==========================================
+# Android / Gradle Build Artifacts (Phase 3)
+# ==========================================
+.gradle/
+**/build/
+*.apk
+*.aab
+local.properties
+.cxx/
+captures/
+*.hprof
+.externalNativeBuild/
+
+# ==========================================
+# Operating System & IDE Artifacts
+# ==========================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

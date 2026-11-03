@@ -1,0 +1,41 @@
+{
+  "model_metadata": {
+    "name": "llama3_2_1b_int4_xnnpack.pte",
+    "base_architecture": "Llama-3.2-1B-Instruct",
+    "format": "ExecuTorch PTE Binary",
+    "binary_size_bytes": 1056,
+    "quantization": "INT4",
+    "backend": "XNNPACK",
+    "target_hardware": "Arm64-v8a / v9 CPU with NEON Vector Extensions"
+  },
+  "runtime_budget": {
+    "quantization": "int4",
+    "weights_bytes": 667339776,
+    "kv_cache_bytes": 16777216,
+    "activation_bytes": 33554432,
+    "runtime_arena_overhead_bytes": 67108864,
+    "total_estimated_ram_bytes": 784780288,
+    "total_estimated_ram_mb": 748.42,
+    "mobile_budget_pass": true
+  },
+  "context_specs": {
+    "max_seq_len": 512,
+    "vocab_size": 128256,
+    "prompt_template": "Llama-3.2-Instruct Chat",
+    "recommended_temperature": 0.2,
+    "recommended_top_p": 0.9,
+    "max_new_tokens": 128
+  },
+  "defect_classes": [
+    "crazing",
+    "inclusion",
+    "patches",
+    "pitted_surface",
+    "rolled-in_scale",
+    "scratches"
+  ],
+  "compilation_metrics": {
+    "export_duration_seconds": 0.16,
+    "dry_run": true
+  }
+}
