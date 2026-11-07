@@ -9,7 +9,8 @@ MyDrive/qc-defect-detector/phase1/<run-name>/models/):
     best_<run-name>.pt, defect_yolov8n_320_fp32.tflite, defect_yolov8n_320_int8.tflite,
     labels.txt, model_io.json
 
-What it does (all on the 360-image val split made by prepare_data.py, seed 42):
+What it does (all on the 360-image val split made by prepare_data.py --split 80/20, seed 42;
+the Phase 1.1 default 70/15/15 split will NOT match the Phase 1 run):
   1. SHA-256 + size of every model file; sizes must match model_io.json from the Colab run.
   2. .pt vs FP32 vs INT8 agreement on the WHOLE val split (conf 0.25, NMS IoU 0.45, same as
      the notebook's 10-image check).

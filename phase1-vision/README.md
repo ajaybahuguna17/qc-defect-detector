@@ -5,22 +5,35 @@
 
 Pipeline: train in Google Colab -> evaluate -> severity rule -> export TFLite FP32 + INT8 -> sanity-check -> document.
 
+**Phase 1.1 (in progress, code ready, Colab run pending):** goal near-zero image-level error.
+New 70/15/15 train/val/test split (210/45/45 per class, seed 42), detector retrained on it, an
+image classifier (YOLOv8n-cls) added, and a deterministic fusion rule (`fusion.py`) that
+combines both. Thresholds are chosen on **val**; every reported number is on **test**.
+Notebook: `notebooks/train_colab_phase1_1.ipynb`. NEU-DET has no defect-free images, so false
+alarms on good parts cannot be measured yet.
+
 ## Layout
 
 ```
 phase1-vision/
-├── notebooks/train_colab.ipynb   # THE entry point: end-to-end Colab run (GPU)
+├── notebooks/
+│   ├── train_colab.ipynb         # Phase 1 run (80/20 split, detector only) - kept for reproducibility
+│   └── train_colab_phase1_1.ipynb  # Phase 1.1 run: 70/15/15, detector + classifier, val sweep, test report
 ├── scripts/
-│   ├── prepare_data.py           # NEU-DET download, VOC->YOLO, seeded 80/20 split, overlap check, data.yaml
+│   ├── prepare_data.py           # NEU-DET download, VOC->YOLO, seeded 70/15/15 split (or legacy 80/20), overlap check, data.yaml
+│   ├── build_cls_dataset.py      # ImageFolder copy of the SAME split for the classifier (data/cls/)
+│   ├── export_cls_tflite.py      # classifier best.pt -> FP32/INT8 .tflite, asserts [1, 6] + softmax, writes model_io.json
+│   ├── fusion_eval.py            # val threshold sweep + image-level evaluation of the fusion rule
 │   ├── export_tflite.py          # best.pt -> FP32/INT8 .tflite, asserts [1, 10, N], writes model_io.json
 │   ├── check_models.py           # post-run checks (any OS): hashes, full-val .pt vs TFLite, P/R sweep, severity, image accuracy
 │   ├── tune_severity.py          # severity area cutoffs = p40/p70/p90 of val GT box area ratios
-│   └── tflite_utils.py           # reference preprocess + decode + NMS (the Android code must match it)
+│   └── tflite_utils.py           # reference preprocess + decode + NMS, classifier preprocess (Android must match)
 ├── severity.py                   # deterministic Low/Medium/High/Critical rule (one config dict)
-├── tests/                        # unit tests: severity rule, decoder
+├── fusion.py                     # deterministic detector + classifier fusion (final class, alert, severity / Review)
+├── tests/                        # unit tests: severity, fusion, split/sweep tools, decoder
 ├── MODEL_IO.md                   # TFLite input/output contract for the Android app
 ├── requirements.txt              # pinned Colab/export environment
-├── data/                         # raw/ and dataset/ are gitignored; data.yaml has no absolute path
+├── data/                         # raw/, dataset/ images+labels and cls/ are gitignored; data.yaml has no absolute path
 └── models/exported/              # gitignored export output
 ```
 
@@ -39,22 +52,35 @@ Defaults: YOLOv8n from COCO-pretrained weights, `imgsz=320` (NEU images are 200x
 
 ```bash
 # dataset (any OS, stdlib only; downloads NEU-DET if data/raw is empty)
-python phase1-vision/scripts/prepare_data.py            # --seed 42 --split-ratio 0.8
+python phase1-vision/scripts/prepare_data.py            # default --split 70/15/15 --seed 42
+python phase1-vision/scripts/prepare_data.py --split 80/20   # legacy Phase 1 split (identical to the old one)
+python phase1-vision/scripts/build_cls_dataset.py       # data/dataset -> data/cls/{train,val,test}/<class>/
 
 # export (Linux x86_64 / macOS only; needs requirements.txt)
 python phase1-vision/scripts/export_tflite.py --weights best.pt \
     --data phase1-vision/data/dataset/data.yaml --imgsz 320 --precisions fp32,int8
 
-# post-training checks (any OS incl. Windows, CPU; models from Drive in models/exported/)
+# post-training checks of the PHASE 1 models (needs the legacy split: prepare_data.py --split 80/20)
 python phase1-vision/scripts/check_models.py
 
 # unit tests (Python >= 3.10; decoder tests need numpy, they are skipped without it)
 python -m unittest discover -s phase1-vision/tests -v
 ```
 
-`prepare_data.py` clears `images/{train,val}` and `labels/{train,val}` before writing, uses a
-private seeded RNG, and fails if any image is in both splits. With the real NEU-DET it produces
-**1,440 train / 360 val** images (3,322 / 867 boxes). Synthetic data is generated only with `--synthetic`.
+`prepare_data.py` clears `images/{train,val,test}` and `labels/{train,val,test}` before writing,
+uses a private seeded RNG, and fails if any image is in two splits (checked in memory and on disk).
+With the real NEU-DET the default 70/15/15 split gives **1,260 train / 270 val / 270 test** images
+(210 / 45 / 45 per class; 2,899 / 661 / 629 boxes) and `data.yaml` gets `test: images/test`.
+`--split 80/20` reproduces the Phase 1 split exactly (**1,440 / 360**, same val images).
+Synthetic data is generated only with `--synthetic`.
+
+## Fusion rule (`fusion.py`, Phase 1.1)
+
+Per image: kept detections = conf >= per-class threshold. `final_class` = classifier class if its
+confidence >= `cls_threshold`, else the top kept detection's class, else `"no defect found"`.
+`alert` = any kept detection OR classifier confident. Severity = `severity.py` on the kept boxes of
+`final_class`; alert without such a box -> `"Review"` (operator must check). All thresholds in
+`FUSION_CONFIG` (the detector/classifier values there are placeholders until the Colab val sweep).
 
 `export_tflite.py` has no fallbacks. If the weights are missing, the checkpoint is not the 6 NEU
 classes, the export fails, or the output is not `[1, 10, N]`, it raises.

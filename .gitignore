@@ -45,7 +45,13 @@ phase1-vision/data/dataset/labels/train/*
 !phase1-vision/data/dataset/labels/train/.gitkeep
 phase1-vision/data/dataset/labels/val/*
 !phase1-vision/data/dataset/labels/val/.gitkeep
+phase1-vision/data/dataset/images/test/*
+!phase1-vision/data/dataset/images/test/.gitkeep
+phase1-vision/data/dataset/labels/test/*
+!phase1-vision/data/dataset/labels/test/.gitkeep
 phase1-vision/data/dataset/labels/*.cache
+# Classifier ImageFolder copy of the same split (scripts/build_cls_dataset.py)
+phase1-vision/data/cls/
 
 # Ignore general dataset archives
 *.zip

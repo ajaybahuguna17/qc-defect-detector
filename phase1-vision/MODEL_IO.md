@@ -1,5 +1,11 @@
 # Phase 1 TFLite model: input / output contract
 
+> **Phase 1.1 (2026-11-07):** the detector is being retrained on the new 70/15/15 split and an
+> image classifier is added (section *Image classifier* at the end). The detector I/O contract
+> below is not expected to change (same export script, same 320 input), but the new files will
+> have new hashes and new accuracy numbers (TEST split). Until the Phase 1.1 Colab run is done,
+> everything in the detector sections refers to the Phase 1 run `neu_yolov8n_320_e100_s42`.
+
 The contract between the vision model and the Android app. The reference implementation
 is `phase1-vision/scripts/tflite_utils.py` (`letterbox`, `to_input_tensor`,
 `decode_yolov8`). The Kotlin code must do exactly the same steps.
@@ -145,3 +151,67 @@ second class; they are scored by their category only.
 INT8 is 3.7x smaller than FP32 and loses 0.029 mAP50 / 0.048 mAP50-95 at the same 320 input.
 Pick FP32 if the phone is fast enough, otherwise INT8 (to be decided with the Phase 3
 on-device benchmarks).
+
+---
+
+# Image classifier (Phase 1.1): input / output contract
+
+> **Status: TODO, not yet exported.** Values marked TODO are filled from
+> `models/classifier/model_io.json` after the Phase 1.1 Colab run
+> (`notebooks/train_colab_phase1_1.ipynb`, run `p11_split701515_det320_cls224_s42`).
+> Files will be on Google Drive under `MyDrive/qc-defect-detector/phase1/p11_split701515_det320_cls224_s42/models/classifier/`.
+
+YOLOv8n-cls, ImageNet-pretrained, trained on the same 70/15/15 split as the detector
+(`data/cls/{train,val,test}/<class>/`, built by `scripts/build_cls_dataset.py`). One label per
+image (the NEU category). Reference code: `scripts/tflite_utils.py` (`cls_preprocess`,
+`cls_input_tensor`, `run_cls_tflite`). Export: `scripts/export_cls_tflite.py`.
+
+## Files
+
+| File | What it is |
+|---|---|
+| `defect_cls_yolov8n_224_fp32.tflite` | FP32. Size TODO. SHA-256 TODO. |
+| `defect_cls_yolov8n_224_int8.tflite` | INT8, calibrated on 30 % of **train**. Size TODO. SHA-256 TODO. |
+| `labels.txt` | Same 6 classes, same order as the detector. |
+| `model_io.json` | Machine-written I/O report, including the pre-processing read from the checkpoint. |
+
+## Input
+
+| Property | Value | Confirmed |
+|---|---|---|
+| Shape | TODO (expected `[1, 3, 224, 224]`) | TODO |
+| Layout | TODO (expected NCHW, like the detector) | TODO |
+| Dtype | TODO (expected float32 for both files) | TODO |
+| Colour order | RGB | from the training pipeline |
+| Resize | Shorter side -> 224 (bilinear), centre crop 224x224. NEU 200x200 -> plain 224x224 resize. **Not** the detector's letterbox. | `cls_preprocess` matches Ultralytics `classify_transforms(224)` exactly (max diff 0 on 20 test images, local check); the notebook re-checks it on all val + test images against the `.pt` pipeline |
+| Normalisation | `pixel / 255.0` -> 0..1, mean 0, std 1 (no ImageNet mean/std) | Ultralytics `classify_transforms` default; the trained checkpoint's transforms are written to `model_io.json` -> `preprocessing` (TODO confirm) |
+
+## Output
+
+| Property | Value | Confirmed |
+|---|---|---|
+| Shape | `[1, 6]` (the export script raises otherwise) | TODO |
+| Dtype | TODO (expected float32) | TODO |
+| Meaning | Class probabilities, **softmax already applied** (export script checks each value in 0..1 and sum = 1 +- 0.01 on a real image) | TODO |
+
+Top-1 = argmax, confidence = that probability. Feed it to `fusion.py` (`classifier_top1`).
+
+## Accuracy (TEST split, 270 images)
+
+| Model | Top-1 | Same top-1 as `.pt` |
+|---|---|---|
+| `.pt` | TODO | - |
+| FP32 `.tflite` | TODO | TODO |
+| INT8 `.tflite` | TODO | TODO |
+
+## Fusion (what the app shows)
+
+`phase1-vision/fusion.py` combines both models for one image (thresholds in `FUSION_CONFIG`,
+chosen on VAL by the notebook; current values are placeholders):
+
+1. kept detections = detections with confidence >= their per-class threshold;
+2. `final_class` = classifier class if its confidence >= `cls_threshold`, else the class of the
+   highest-confidence kept detection, else `"no defect found"`;
+3. `alert` = any kept detection OR classifier confidence >= `cls_threshold`;
+4. severity = `severity.py` on the kept boxes of `final_class`; alert without such a box ->
+   level `"Review"` (the operator must check the part).

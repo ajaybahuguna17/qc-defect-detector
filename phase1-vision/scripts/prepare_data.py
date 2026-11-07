@@ -7,9 +7,11 @@ Automates the entire data acquisition, annotation conversion, and directory setu
 1. Automatically downloads the benchmark NEU Surface Defect Database (NEU-DET)
    (falls back to kagglehub; never to synthetic data unless --synthetic is given).
 2. Parses PASCAL VOC XML annotations and converts them to normalized YOLO format.
-3. Performs a stratified, seeded train/val split (default 80/20, seed 42).
-   The output images/ and labels/ train+val dirs are CLEARED first, and the script
-   fails if any image stem ends up in both train and val.
+3. Performs a stratified, seeded split, per class (seed 42):
+     default  --split 70/15/15 -> train / val / test  (NEU-DET: 210 / 45 / 45 per class)
+     legacy   --split 80/20    -> train / val, no test (the Phase 1 split, 240 / 60 per class)
+   The output images/ and labels/ {train,val,test} dirs are CLEARED first, and the script
+   fails if any image stem ends up in more than one split.
 4. Writes data.yaml WITHOUT an absolute path (Ultralytics resolves it from the
    yaml's own folder), so the file is portable between Windows, Colab and Linux.
 5. Runs dataset integrity checks and prints final counts / class distribution.
@@ -637,28 +639,57 @@ def clear_dir_keep_gitkeep(d: Path) -> None:
             item.unlink()
 
 
-def assert_no_overlap(train_pairs: List[Tuple[Path, Path]], val_pairs: List[Tuple[Path, Path]]) -> None:
-    """Fail loudly if any image (by stem, case-insensitive) is in both splits."""
-    train_stems = {img.stem.lower() for img, _ in train_pairs}
-    val_stems = {img.stem.lower() for img, _ in val_pairs}
-    dup_train = len(train_stems) != len(train_pairs)
-    dup_val = len(val_stems) != len(val_pairs)
-    overlap = sorted(train_stems & val_stems)
-    if overlap or dup_train or dup_val:
-        raise RuntimeError(
-            f"Train/val split is not clean: {len(overlap)} stems in both splits "
-            f"(e.g. {overlap[:10]}), duplicate stems within train={dup_train}, within val={dup_val}."
-        )
+SPLITS: Tuple[str, ...] = ("train", "val", "test")
+
+# Named split presets. Ratios are per class, applied after a seeded shuffle.
+SPLIT_PRESETS: Dict[str, Tuple[float, float, float]] = {
+    "70/15/15": (0.70, 0.15, 0.15),   # Phase 1.1 default: train / val (threshold tuning) / test (final report)
+    "80/20": (0.80, 0.20, 0.0),       # Phase 1 legacy split, no test set
+}
+
+
+def split_sizes(n: int, ratios: Tuple[float, float, float]) -> Tuple[int, int, int]:
+    """Per-class split sizes. Two-way (test ratio 0) keeps the old int() rounding so the
+    80/20 split is identical to Phase 1; three-way rounds train and val, test gets the rest."""
+    r_train, r_val, r_test = ratios
+    if r_test == 0:
+        n_train = int(n * r_train)
+        return n_train, n - n_train, 0
+    n_train = int(round(n * r_train))
+    n_val = int(round(n * r_val))
+    n_test = n - n_train - n_val
+    if min(n_train, n_val, n_test) < 0:
+        raise ValueError(f"bad split sizes for n={n}, ratios={ratios}")
+    return n_train, n_val, n_test
+
+
+def assert_no_overlap(splits: Dict[str, List[Tuple[Path, Path]]]) -> None:
+    """Fail loudly if any image (by stem, case-insensitive) is in two splits, or twice in one split."""
+    stems = {}
+    for name, pairs in splits.items():
+        st = {img.stem.lower() for img, _ in pairs}
+        if len(st) != len(pairs):
+            raise RuntimeError(f"split '{name}' contains duplicate image stems")
+        stems[name] = st
+    names = list(splits)
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            overlap = sorted(stems[a] & stems[b])
+            if overlap:
+                raise RuntimeError(
+                    f"Split is not clean: {len(overlap)} stems in both {a} and {b} (e.g. {overlap[:10]})."
+                )
 
 
 def verify_dataset_on_disk(dataset_dir: Path) -> Dict[str, int]:
-    """Re-read the written dataset and fail if splits overlap or images/labels mismatch."""
+    """Re-read the written dataset and fail if any two splits overlap or images/labels mismatch."""
     exts = {".jpg", ".jpeg", ".png", ".bmp"}
     out: Dict[str, int] = {}
-    stems = {}
-    for split in ("train", "val"):
-        imgs = [p for p in (dataset_dir / "images" / split).iterdir() if p.suffix.lower() in exts]
-        lbls = list((dataset_dir / "labels" / split).glob("*.txt"))
+    stems: Dict[str, set] = {}
+    for split in SPLITS:
+        img_dir, lbl_dir = dataset_dir / "images" / split, dataset_dir / "labels" / split
+        imgs = [p for p in img_dir.iterdir() if p.suffix.lower() in exts] if img_dir.is_dir() else []
+        lbls = list(lbl_dir.glob("*.txt")) if lbl_dir.is_dir() else []
         img_stems = {p.stem.lower() for p in imgs}
         lbl_stems = {p.stem.lower() for p in lbls}
         if img_stems != lbl_stems:
@@ -669,26 +700,29 @@ def verify_dataset_on_disk(dataset_dir: Path) -> Dict[str, int]:
         stems[split] = img_stems
         out[f"{split}_images"] = len(imgs)
         out[f"{split}_labels"] = len(lbls)
-    overlap = sorted(stems["train"] & stems["val"])
-    if overlap:
-        raise RuntimeError(f"{len(overlap)} images are in BOTH train and val on disk, e.g. {overlap[:10]}")
+    for i, a in enumerate(SPLITS):
+        for b in SPLITS[i + 1:]:
+            overlap = sorted(stems[a] & stems[b])
+            if overlap:
+                raise RuntimeError(f"{len(overlap)} images are in BOTH {a} and {b} on disk, e.g. {overlap[:10]}")
     return out
 
 
-def write_data_yaml(yaml_path: Path, classes: List[str]):
+def write_data_yaml(yaml_path: Path, classes: List[str], with_test: bool = True):
     """Generates a portable Ultralytics data.yaml (no absolute paths).
 
     `path` is intentionally omitted: Ultralytics then uses the folder that contains
     this yaml as the dataset root. Always pass the yaml path itself to YOLO.
     """
     names_yaml = "\n".join([f"  {idx}: {cls_name}" for idx, cls_name in enumerate(classes)])
+    test_line = "test: images/test" if with_test else "test: # none (80/20 legacy split)"
     content = f"""# Ultralytics YOLO Industrial Defect Detection Dataset
 # Standard Benchmark: NEU Surface Defect Database (NEU-DET)
 # Auto-generated by prepare_data.py
 # No `path:` key on purpose -> dataset root = the folder containing this file.
 train: images/train
 val: images/val
-test: # optional
+{test_line}
 
 # Defect class count
 nc: {len(classes)}
@@ -706,7 +740,7 @@ def prepare_dataset(
     raw_dir: Path,
     dataset_dir: Path,
     classes: Optional[List[str]] = None,
-    split_ratio: float = 0.8,
+    split: str = "70/15/15",
     seed: int = 42,
     force_download: bool = False,
     allow_synthetic: bool = False,
@@ -716,13 +750,17 @@ def prepare_dataset(
     Main programmatic orchestrator:
     1. Ensures raw dataset exists (downloading or creating synthetic benchmark if needed).
     2. Matches images with corresponding VOC XML annotations.
-    3. Performs stratified train/val split.
+    3. Performs a stratified train/val(/test) split (see SPLIT_PRESETS).
     4. Writes normalized YOLO label files and images.
     5. Auto-generates data.yaml.
     6. Returns execution summary dictionary.
     """
     if classes is None:
         classes = DEFAULT_CLASSES
+    if split not in SPLIT_PRESETS:
+        raise ValueError(f"unknown split {split!r}; choose one of {list(SPLIT_PRESETS)}")
+    ratios = SPLIT_PRESETS[split]
+    with_test = ratios[2] > 0
 
     rng = random.Random(seed)  # private, seeded RNG -> identical split on every machine
     class_to_id = {cls_name: i for i, cls_name in enumerate(classes)}
@@ -735,13 +773,12 @@ def prepare_dataset(
     )
 
     # 2. Output directory setup
-    images_train = dataset_dir / "images" / "train"
-    images_val = dataset_dir / "images" / "val"
-    labels_train = dataset_dir / "labels" / "train"
-    labels_val = dataset_dir / "labels" / "val"
+    img_dirs = {sp: dataset_dir / "images" / sp for sp in SPLITS}
+    lbl_dirs = {sp: dataset_dir / "labels" / sp for sp in SPLITS}
 
-    # Clear previous outputs so stale files from older runs can never leak across splits.
-    for d in [images_train, images_val, labels_train, labels_val]:
+    # Clear previous outputs (all three splits, also test in 80/20 mode) so stale files from
+    # older runs can never leak across splits.
+    for d in [*img_dirs.values(), *lbl_dirs.values()]:
         clear_dir_keep_gitkeep(d)
     for cache in (dataset_dir / "labels").glob("*.cache"):  # Ultralytics label caches
         cache.unlink()
@@ -793,28 +830,36 @@ def prepare_dataset(
         if not assigned:
             unclassified.append((img, xml))
 
-    train_pairs: List[Tuple[Path, Path]] = []
-    val_pairs: List[Tuple[Path, Path]] = []
+    parts: Dict[str, List[Tuple[Path, Path]]] = {sp: [] for sp in SPLITS}
+    per_class_counts: Dict[str, Dict[str, int]] = {}
+
+    def assign(group: List[Tuple[Path, Path]]) -> Tuple[int, int, int]:
+        rng.shuffle(group)
+        n_tr, n_va, n_te = split_sizes(len(group), ratios)
+        parts["train"].extend(group[:n_tr])
+        parts["val"].extend(group[n_tr:n_tr + n_va])
+        parts["test"].extend(group[n_tr + n_va:])
+        return n_tr, n_va, n_te
 
     for c, pairs in class_groups.items():
-        rng.shuffle(pairs)
-        s_idx = int(len(pairs) * split_ratio)
-        train_pairs.extend(pairs[:s_idx])
-        val_pairs.extend(pairs[s_idx:])
+        n_tr, n_va, n_te = assign(pairs)
+        per_class_counts[c] = {"train": n_tr, "val": n_va, "test": n_te}
 
     if unclassified:
-        rng.shuffle(unclassified)
-        s_idx = int(len(unclassified) * split_ratio)
-        train_pairs.extend(unclassified[:s_idx])
-        val_pairs.extend(unclassified[s_idx:])
+        n_tr, n_va, n_te = assign(unclassified)
+        per_class_counts["<unclassified>"] = {"train": n_tr, "val": n_va, "test": n_te}
 
-    # Shuffle final train and val sets
-    rng.shuffle(train_pairs)
-    rng.shuffle(val_pairs)
+    # Shuffle the final splits (same RNG call order as Phase 1 for train/val)
+    for sp in SPLITS:
+        if parts[sp]:
+            rng.shuffle(parts[sp])
 
-    assert_no_overlap(train_pairs, val_pairs)
+    if not with_test and parts["test"]:
+        raise RuntimeError("80/20 split produced test images; split_sizes is wrong")
+    assert_no_overlap(parts)
+    train_pairs, val_pairs, test_pairs = parts["train"], parts["val"], parts["test"]
 
-    print(f"[INFO] Partitioned into: {len(train_pairs)} Train images | {len(val_pairs)} Validation images")
+    print(f"[INFO] Partitioned ({split}): {len(train_pairs)} train | {len(val_pairs)} val | {len(test_pairs)} test")
 
     # 5. Process Partitions
     def process_partition(
@@ -848,49 +893,57 @@ def prepare_dataset(
 
         return total_boxes, box_counts
 
-    train_total_boxes, train_box_counts = process_partition(train_pairs, images_train, labels_train, "Train")
-    val_total_boxes, val_box_counts = process_partition(val_pairs, images_val, labels_val, "Validation")
+    boxes = {sp: process_partition(parts[sp], img_dirs[sp], lbl_dirs[sp], sp) for sp in SPLITS}
 
     # 6. Auto-generate data.yaml
     yaml_path = dataset_dir / "data.yaml"
-    write_data_yaml(yaml_path, classes)
+    write_data_yaml(yaml_path, classes, with_test=with_test)
 
     # 6b. Verify what is actually on disk (catches anything the in-memory check could miss)
     disk = verify_dataset_on_disk(dataset_dir)
+    for sp in SPLITS:
+        if disk[f"{sp}_images"] != len(parts[sp]):
+            raise RuntimeError(f"{sp}: {disk[sp + '_images']} images on disk, expected {len(parts[sp])}")
 
     # 7. Print Terminal Diagnostic Report
-    print("\n" + "=" * 62)
-    print(" DATASET PREPARATION SUMMARY & CLASS DISTRIBUTION")
-    print("=" * 62)
-    print(f"{'Defect Class':<20} | {'Train Boxes':<12} | {'Val Boxes':<12} | {'Total':<8}")
-    print("-" * 62)
+    print("\n" + "=" * 78)
+    print(f" DATASET PREPARATION SUMMARY ({split}, seed {seed})")
+    print("=" * 78)
+    print(f"{'Defect Class':<20} | {'Train img/box':<14} | {'Val img/box':<14} | {'Test img/box':<14}")
+    print("-" * 78)
     for cls_name in classes:
-        t_c = train_box_counts[cls_name]
-        v_c = val_box_counts[cls_name]
-        print(f"{cls_name:<20} | {t_c:<12} | {v_c:<12} | {t_c + v_c:<8}")
-    print("-" * 62)
-    print(f"{'TOTAL DEFECT BOXES':<20} | {train_total_boxes:<12} | {val_total_boxes:<12} | {train_total_boxes + val_total_boxes:<8}")
-    print(f"{'TOTAL IMAGES':<20} | {len(train_pairs):<12} | {len(val_pairs):<12} | {len(train_pairs) + len(val_pairs):<8}")
-    print("=" * 62)
-    print(f"[CHECK] On disk: train {disk['train_images']} images / {disk['train_labels']} labels, "
-          f"val {disk['val_images']} images / {disk['val_labels']} labels, train/val overlap = 0")
+        cc = per_class_counts[cls_name]
+        cells = [f"{cc[sp]}/{boxes[sp][1][cls_name]}" for sp in SPLITS]
+        print(f"{cls_name:<20} | {cells[0]:<14} | {cells[1]:<14} | {cells[2]:<14}")
+    print("-" * 78)
+    tot = [f"{len(parts[sp])}/{boxes[sp][0]}" for sp in SPLITS]
+    print(f"{'TOTAL':<20} | {tot[0]:<14} | {tot[1]:<14} | {tot[2]:<14}")
+    print("=" * 78)
+    print("[CHECK] On disk: " + ", ".join(
+        f"{sp} {disk[sp + '_images']} images / {disk[sp + '_labels']} labels" for sp in SPLITS)
+        + "; pairwise overlap = 0")
     print(f"[CHECK] Split seed = {seed}")
     print(f"[SUCCESS] YOLO configuration generated at: {yaml_path}")
     print(f"[SUCCESS] Dataset root ready for training at: {dataset_dir.resolve()}")
-    print("=" * 62 + "\n")
+    print("=" * 78 + "\n")
 
     return {
         "status": "success",
+        "split": split,
         "seed": seed,
         "dataset_dir": str(dataset_dir.resolve()),
         "data_yaml": str(yaml_path.resolve()),
         "classes": classes,
         "train_images": len(train_pairs),
         "val_images": len(val_pairs),
-        "train_boxes": train_total_boxes,
-        "val_boxes": val_total_boxes,
-        "train_distribution": train_box_counts,
-        "val_distribution": val_box_counts,
+        "test_images": len(test_pairs),
+        "per_class_images": per_class_counts,
+        "train_boxes": boxes["train"][0],
+        "val_boxes": boxes["val"][0],
+        "test_boxes": boxes["test"][0],
+        "train_distribution": boxes["train"][1],
+        "val_distribution": boxes["val"][1],
+        "test_distribution": boxes["test"][1],
     }
 
 
@@ -915,10 +968,16 @@ def main():
         help="Target directory for processed YOLO dataset"
     )
     parser.add_argument(
+        "--split",
+        choices=list(SPLIT_PRESETS),
+        default="70/15/15",
+        help="70/15/15 = train/val/test (default, Phase 1.1); 80/20 = legacy Phase 1 train/val split, no test"
+    )
+    parser.add_argument(
         "--split-ratio",
         type=float,
-        default=0.8,
-        help="Train split ratio (default: 0.8 for 80/20 train/val)"
+        default=None,
+        help="LEGACY: only 0.8 is accepted and means --split 80/20 (kept so the Phase 1 notebook still runs)"
     )
     parser.add_argument(
         "--seed",
@@ -944,6 +1003,10 @@ def main():
     )
 
     args = parser.parse_args()
+    if args.split_ratio is not None:
+        if abs(args.split_ratio - 0.8) > 1e-9:
+            parser.error("--split-ratio is legacy and only accepts 0.8 (= --split 80/20)")
+        args.split = "80/20"
 
     # Resolve paths relative to working directory
     raw_dir = Path(args.raw_dir).resolve()
@@ -954,7 +1017,7 @@ def main():
     print("==================================================================")
     print(f"Raw Directory:       {raw_dir}")
     print(f"Output Dataset Dir:  {dataset_dir}")
-    print(f"Train/Val Ratio:     {args.split_ratio:.0%} / {(1.0 - args.split_ratio):.0%}")
+    print(f"Split:               {args.split} (train/val/test per class)")
     print(f"Random Seed:         {args.seed}")
     print(f"Force Download:      {args.download}")
     print(f"Synthetic Mode:      {args.synthetic}")
@@ -969,7 +1032,7 @@ def main():
         raw_dir=raw_dir,
         dataset_dir=dataset_dir,
         classes=DEFAULT_CLASSES,
-        split_ratio=args.split_ratio,
+        split=args.split,
         seed=args.seed,
         force_download=args.download,
         allow_synthetic=args.synthetic,

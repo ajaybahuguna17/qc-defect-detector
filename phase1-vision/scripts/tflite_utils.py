@@ -294,3 +294,99 @@ def match_detections(ref: List[Dict[str, Any]], other: List[Dict[str, Any]], iou
         "mean_iou": float(np.mean(ious)) if ious else None,
         "mean_abs_conf_diff": float(np.mean(dconf)) if dconf else None,
     }
+
+
+# ----------------------------------------------------------------------------
+# Image classifier (Phase 1.1, YOLOv8n-cls): I/O, pre-processing, run
+# ----------------------------------------------------------------------------
+# Reference pre-processing = Ultralytics classify_transforms at crop_fraction 1.0:
+#   RGB -> resize the SHORTER side to S (bilinear, PIL) -> centre crop S x S -> pixel / 255
+#   (mean 0, std 1, i.e. no mean/std normalisation). NEU 200x200 -> plain 224x224 resize.
+# The Phase 1.1 notebook checks this against the .pt pipeline on every test image and records
+# the max probability difference; the Android code must do the same steps.
+
+@dataclass
+class ClsIO:
+    input_shape: List[int]
+    input_dtype: str
+    input_layout: str               # "NCHW" or "NHWC"
+    input_hw: Tuple[int, int]
+    input_quant: Tuple[float, int]
+    output_shape: List[int]
+    output_dtype: str
+    output_quant: Tuple[float, int]
+    num_classes: int
+
+    def to_dict(self) -> Dict[str, Any]:
+        return dict(self.__dict__)
+
+
+def describe_cls_io(interp) -> ClsIO:
+    ins, outs = interp.get_input_details(), interp.get_output_details()
+    if len(ins) != 1 or len(outs) != 1:
+        raise ValueError(f"expected 1 input and 1 output tensor, got {len(ins)} / {len(outs)}")
+    i, o = ins[0], outs[0]
+    shape = [int(v) for v in i["shape"]]
+    if len(shape) != 4 or shape[0] != 1:
+        raise ValueError(f"unexpected classifier input shape {shape}")
+    if shape[1] == 3 and shape[3] != 3:
+        layout, hw = "NCHW", (shape[2], shape[3])
+    elif shape[3] == 3 and shape[1] != 3:
+        layout, hw = "NHWC", (shape[1], shape[2])
+    else:
+        raise ValueError(f"cannot tell layout from input shape {shape}")
+    oshape = [int(v) for v in o["shape"]]
+    return ClsIO(
+        input_shape=shape, input_dtype=np.dtype(i["dtype"]).name, input_layout=layout, input_hw=hw,
+        input_quant=(float(i["quantization"][0]), int(i["quantization"][1])),
+        output_shape=oshape, output_dtype=np.dtype(o["dtype"]).name,
+        output_quant=(float(o["quantization"][0]), int(o["quantization"][1])),
+        num_classes=oshape[-1],
+    )
+
+
+def assert_classifier_model(io: ClsIO, expected_classes: int = 6) -> None:
+    """Fail loudly unless the output is exactly [1, expected_classes]."""
+    if io.output_shape != [1, expected_classes]:
+        raise AssertionError(f"classifier output shape {io.output_shape} != [1, {expected_classes}] "
+                             f"(1000 classes means the ImageNet yolov8n-cls was exported by mistake)")
+
+
+def cls_preprocess(rgb: np.ndarray, size: int) -> np.ndarray:
+    """RGB uint8 HxWx3 -> HWC float32 S x S x 3 in 0..1 (shorter side -> S, bilinear, centre crop)."""
+    from PIL import Image
+    h0, w0 = rgb.shape[:2]
+    # same arithmetic as torchvision Resize(int): long side = int(S * long / short) (truncated)
+    nw, nh = (size, int(size * h0 / w0)) if w0 <= h0 else (int(size * w0 / h0), size)
+    im = Image.fromarray(rgb)
+    if (nw, nh) != (w0, h0):
+        im = im.resize((nw, nh), Image.BILINEAR)
+    left, top = int(round((nw - size) / 2.0)), int(round((nh - size) / 2.0))
+    im = im.crop((left, top, left + size, top + size))
+    return np.asarray(im, dtype=np.float32) / 255.0
+
+
+def cls_input_tensor(hwc01: np.ndarray, io: ClsIO) -> np.ndarray:
+    x = hwc01.transpose(2, 0, 1) if io.input_layout == "NCHW" else hwc01
+    x = x[None].astype(np.float32)
+    if io.input_dtype in ("int8", "uint8", "int16"):
+        scale, zp = io.input_quant
+        info = np.iinfo(np.dtype(io.input_dtype))
+        x = np.clip(np.round(x / scale + zp), info.min, info.max).astype(io.input_dtype)
+    elif io.input_dtype != "float32":
+        raise ValueError(f"unsupported input dtype {io.input_dtype}")
+    return np.ascontiguousarray(x)
+
+
+def run_cls_tflite(interp, io: ClsIO, image_path: Path) -> np.ndarray:
+    """Class probabilities [nc] for one image (output dequantised if needed)."""
+    if io.input_hw[0] != io.input_hw[1]:
+        raise ValueError(f"classifier input must be square, got {io.input_hw}")
+    x = cls_input_tensor(cls_preprocess(read_rgb(Path(image_path)), io.input_hw[0]), io)
+    interp.set_tensor(interp.get_input_details()[0]["index"], x)
+    interp.invoke()
+    out = interp.get_tensor(interp.get_output_details()[0]["index"])
+    if io.output_dtype in ("int8", "uint8", "int16"):
+        scale, zp = io.output_quant
+        out = (out.astype(np.float32) - zp) * scale
+    return out.reshape(-1).astype(np.float32)

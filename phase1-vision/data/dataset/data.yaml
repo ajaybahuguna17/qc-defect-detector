@@ -4,7 +4,7 @@
 # No `path:` key on purpose -> dataset root = the folder containing this file.
 train: images/train
 val: images/val
-test: # optional
+test: images/test
 
 # Defect class count
 nc: 6
