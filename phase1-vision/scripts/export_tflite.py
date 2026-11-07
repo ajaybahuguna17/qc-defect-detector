@@ -9,6 +9,10 @@ Strict by design:
     (4 box rows + 6 class rows). The real input shape / layout / dtype are printed and
     written to model_io.json.
 
+Each precision is exported in a child process (export_child.py) with a timeout
+(--timeout-min, default 15). Any failure or timeout, FP32 or INT8, is a hard error for the
+detector (there is no skip option here).
+
 Runs on Linux x86_64 or macOS only (Ultralytics LiteRT export requirement), i.e. Colab.
 Pinned toolchain: phase1-vision/requirements.txt.
 
@@ -28,6 +32,7 @@ from typing import Dict, List, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from tflite_utils import NEU_CLASSES, assert_defect_model, describe_io, load_interpreter  # noqa: E402
+from export_child import DEFAULT_TIMEOUT_MIN, resolve_outcome, run_export  # noqa: E402
 
 PHASE1_DIR = Path(__file__).resolve().parents[1]
 
@@ -47,23 +52,6 @@ def write_calibration_yaml(data_yaml: Path, out_path: Path, split: str) -> Path:
     return out_path
 
 
-def export_one(model_path: Path, imgsz: int, int8: bool, calib_yaml: Optional[Path], calib_fraction: float) -> Path:
-    from ultralytics import YOLO
-
-    model = YOLO(str(model_path))
-    kwargs = dict(format="litert", imgsz=imgsz, batch=1)
-    if int8:
-        if calib_yaml is None:
-            raise ValueError("INT8 export needs calibration data (--data)")
-        kwargs.update(quantize=8, data=str(calib_yaml), fraction=calib_fraction)
-    print(f"[export] YOLO.export({kwargs})")
-    out = model.export(**kwargs)
-    out = Path(out) if out else None
-    if out is None or not out.is_file():
-        raise RuntimeError(f"Ultralytics export returned {out!r}; no .tflite produced")
-    return out
-
-
 def check_tflite(path: Path, n_classes: int) -> Dict:
     interp = load_interpreter(path)
     io = describe_io(interp)
@@ -73,6 +61,7 @@ def check_tflite(path: Path, n_classes: int) -> Dict:
     print(f"        output: shape={io.output_shape} dtype={io.output_dtype} quant={io.output_quant}")
     print(f"        classes={io.num_classes} anchors={io.num_anchors} size={path.stat().st_size / 1e6:.2f} MB")
     d = io.to_dict()
+    d["status"] = "ok"
     d["file"] = path.name
     d["size_bytes"] = path.stat().st_size
     return d
@@ -89,6 +78,8 @@ def main(argv: Optional[List[str]] = None) -> Dict:
                     help="images used for INT8 calibration (default train, so val stays untouched for evaluation)")
     ap.add_argument("--calib-fraction", type=float, default=0.3,
                     help="fraction of the calibration split to use (0.3 of train ~= 430 images)")
+    ap.add_argument("--timeout-min", type=float, default=DEFAULT_TIMEOUT_MIN,
+                    help="per-precision export timeout in minutes (child process is killed; hard error)")
     args = ap.parse_args(argv)
 
     weights = Path(args.weights).resolve()
@@ -125,12 +116,15 @@ def main(argv: Optional[List[str]] = None) -> Dict:
 
     report = {"weights": str(weights), "imgsz": args.imgsz, "classes": class_list, "models": {}}
     for prec in precisions:
-        produced = export_one(src, args.imgsz, prec == "int8", calib_yaml, args.calib_fraction)
+        outcome = run_export(src, args.imgsz, prec, calib_yaml, args.calib_fraction, args.timeout_min, work, "detector")
+        resolve_outcome(outcome, allow_skip_int8=False, label="detector")   # raises on any failure
+        produced = Path(outcome.output)
         final = out_dir / f"defect_yolov8n_{args.imgsz}_{prec}.tflite"
         shutil.copy2(produced, final)
         report["models"][prec] = check_tflite(final, len(class_list))
         if prec == "int8":
             report["models"][prec]["calibration"] = {"split": args.calib_split, "fraction": args.calib_fraction}
+        report["models"][prec]["export_seconds"] = outcome.seconds
 
     shutil.rmtree(work)
     (out_dir / "labels.txt").write_text("\n".join(class_list) + "\n", encoding="utf-8")

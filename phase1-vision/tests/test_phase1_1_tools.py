@@ -127,6 +127,16 @@ class SweepTests(unittest.TestCase):
         self.assertEqual(out["threshold"], 0.8)                           # 0.7..0.9 all give 2/3
 
 
+class ClassifierOnlyAccuracyTests(unittest.TestCase):
+    def test_per_class_accuracy_present(self):
+        from fusion_eval import classifier_only_accuracy
+        rs = [rec("crazing_1.jpg", "crazing", probs=onehot(0, 0.9)), rec("crazing_2.jpg", "crazing", probs=onehot(1, 0.9))]
+        out = classifier_only_accuracy(rs)
+        self.assertEqual((out["correct"], out["accuracy"]), (1, 0.5))
+        self.assertEqual(out["per_class"]["crazing"]["accuracy"], 0.5)
+        self.assertIsNone(out["per_class"]["patches"]["accuracy"])
+
+
 @unittest.skipUnless(HAVE_NP, "numpy / pillow not installed")
 class ClsPreprocessTests(unittest.TestCase):
     def test_square_resize_range_and_shape(self):

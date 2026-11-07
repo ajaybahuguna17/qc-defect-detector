@@ -156,7 +156,16 @@ on-device benchmarks).
 
 # Image classifier (Phase 1.1): input / output contract
 
-> **Status: TODO, not yet exported.** Values marked TODO are filled from
+> **Classifier INT8: SKIPPED.** In the Phase 1.1 Colab run (2026-11-07) the INT8 export hung for
+> more than 45 min (49 min with no output and no file activity) in the ai-edge-quantizer
+> calibration step and was interrupted. There is **no INT8 classifier**. The resumed run records
+> `"int8": {"status": "skipped", "reason": "hung >45 min in ai-edge-quantizer calibration on Colab,
+> 2026-11-07", "timestamp": ...}` in `model_io.json`. The **"INT8 pipeline" is detector INT8 +
+> classifier FP32** (about 6 MB extra for the FP32 classifier, size TODO). Exports now run in a child
+> process with a timeout (`scripts/export_child.py`, default 15 min); an INT8 classifier failure
+> is only tolerated with `--allow-skip-int8`, never silently.
+>
+> **Status: TODO, FP32 exported, not yet evaluated.** Values marked TODO are filled from
 > `models/classifier/model_io.json` after the Phase 1.1 Colab run
 > (`notebooks/train_colab_phase1_1.ipynb`, run `p11_split701515_det320_cls224_s42`).
 > Files will be on Google Drive under `MyDrive/qc-defect-detector/phase1/p11_split701515_det320_cls224_s42/models/classifier/`.
@@ -171,7 +180,7 @@ image (the NEU category). Reference code: `scripts/tflite_utils.py` (`cls_prepro
 | File | What it is |
 |---|---|
 | `defect_cls_yolov8n_224_fp32.tflite` | FP32. Size TODO. SHA-256 TODO. |
-| `defect_cls_yolov8n_224_int8.tflite` | INT8, calibrated on 30 % of **train**. Size TODO. SHA-256 TODO. |
+| `defect_cls_yolov8n_224_int8.tflite` | **Does not exist: skipped** (INT8 calibration hung, see above). |
 | `labels.txt` | Same 6 classes, same order as the detector. |
 | `model_io.json` | Machine-written I/O report, including the pre-processing read from the checkpoint. |
 
@@ -202,7 +211,7 @@ Top-1 = argmax, confidence = that probability. Feed it to `fusion.py` (`classifi
 |---|---|---|
 | `.pt` | TODO | - |
 | FP32 `.tflite` | TODO | TODO |
-| INT8 `.tflite` | TODO | TODO |
+| INT8 `.tflite` | skipped | skipped |
 
 ## Fusion (what the app shows)
 

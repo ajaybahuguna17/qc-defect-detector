@@ -23,6 +23,7 @@ phase1-vision/
 │   ├── prepare_data.py           # NEU-DET download, VOC->YOLO, seeded 70/15/15 split (or legacy 80/20), overlap check, data.yaml
 │   ├── build_cls_dataset.py      # ImageFolder copy of the SAME split for the classifier (data/cls/)
 │   ├── export_cls_tflite.py      # classifier best.pt -> FP32/INT8 .tflite, asserts [1, 6] + softmax, writes model_io.json
+│   ├── export_child.py           # runs each export precision in a child process with a timeout (default 15 min)
 │   ├── fusion_eval.py            # val threshold sweep + image-level evaluation of the fusion rule
 │   ├── export_tflite.py          # best.pt -> FP32/INT8 .tflite, asserts [1, 10, N], writes model_io.json
 │   ├── check_models.py           # post-run checks (any OS): hashes, full-val .pt vs TFLite, P/R sweep, severity, image accuracy

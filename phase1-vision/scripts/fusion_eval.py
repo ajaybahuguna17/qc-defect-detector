@@ -141,6 +141,8 @@ def classifier_only_accuracy(records: Sequence[Mapping[str, Any]], classes: Sequ
         top = classifier_top1(r["probs"], classes)["class_name"]
         per[r["true_class"]]["images"] += 1
         per[r["true_class"]]["correct"] += int(top == r["true_class"])
-    n = sum(v["images"] for v in per.values())
+    for v in per.values():
+        v["accuracy"] = round(v["correct"] / v["images"], 4) if v["images"] else None
+    n =sum(v["images"] for v in per.values())
     k = sum(v["correct"] for v in per.values())
     return {"images": n, "correct": k, "accuracy": round(k / n, 4) if n else None, "per_class": per}
