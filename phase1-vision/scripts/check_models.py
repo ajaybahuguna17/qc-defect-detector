@@ -18,6 +18,8 @@ What it does (all on the 360-image val split made by prepare_data.py, seed 42):
   4. Ultralytics mAP for .pt (default rect=True, and rect=False at a fixed 320 input like the
      .tflite), FP32 and INT8, to explain the .pt -> FP32 mAP gap.
   5. Regenerates results/severity_demo.png with the CURRENT severity rule on the same 10 images.
+  6. Severity level distribution on all val images (each model, and ground-truth boxes).
+  7. Image-level accuracy: % of val images with >= 1 detection of the correct class, overall and per class.
 
 Writes results/phase1_checks.json and results/severity_demo.png. Raises on any missing file
 or mismatch; it never substitutes another model.
@@ -314,12 +316,80 @@ def main() -> None:
         ax.axis("off")
         print(f"    {n:22s} FP32 {str(row['fp32']['level']):8s} INT8 {str(row['int8']['level']):8s} "
               f"(old rule FP32: {old['level']})")
-    fig.suptitle("Severity rule: min conf crazing 0.25, others 0.50 (red = counted, gray = ignored); "
-                 "boxes = FP32 TFLite, conf >= 0.25", fontsize=10)
+    t = SEVERITY_CONFIG["area_thresholds"]
+    fig.suptitle(f"Severity rule: min conf crazing {min_conf('crazing'):.2f}, others {SEVERITY_CONFIG['min_confidence']:.2f}; "
+                 f"area Low < {t['low_max']} <= Medium < {t['medium_max']} <= High <= {t['high_max']} < Critical "
+                 "(red = counted, gray = ignored; boxes = FP32 TFLite, conf >= 0.25)", fontsize=10)
     plt.tight_layout()
     demo_png = args.results_dir / "severity_demo.png"
     plt.savefig(demo_png, dpi=120)
     plt.close(fig)
+
+    # ---- 6. severity level distribution on the whole val split ----------------------------
+    # Image level (after the 3+ escalation) and detection level (before it), for each model's
+    # conf-0.25 detections and for the ground-truth boxes (confidence 1.0) as the reference.
+    lv_names = ["Low", "Medium", "High", "Critical", "None"]
+    sev_dist = {}
+    sources = {m: at_conf[m] for m in models}
+    sources["ground_truth"] = {n: [{"class_name": NEU_CLASSES[g["class_id"]], "confidence": 1.0,
+                                    "bbox_xyxy": g["bbox_xyxy"]} for g in gts[n]] for n in names}
+    for src, dets_by_img in sources.items():
+        img_cnt = dict.fromkeys(lv_names, 0)
+        det_cnt = dict.fromkeys(lv_names[:4], 0)
+        escalated = 0
+        for n in names:
+            w, h = Image.open(ds / "images" / "val" / n).size
+            r = assess_severity(dets_by_img[n], w, h)
+            img_cnt[r.level or "None"] += 1
+            escalated += int(r.escalated)
+            for d in r.detections:
+                det_cnt[d.level] += 1
+        nd = max(sum(det_cnt.values()), 1)
+        sev_dist[src] = {"images": img_cnt,
+                         "images_pct": {k: round(100 * v / len(names), 1) for k, v in img_cnt.items()},
+                         "images_escalated": escalated,
+                         "detections_before_escalation": det_cnt,
+                         "detections_pct": {k: round(100 * v / nd, 1) for k, v in det_cnt.items()}}
+    print("[6] severity on all val images (image level after escalation | detection level before)")
+    for src, d in sev_dist.items():
+        print(f"    {src:13s} images " + " ".join(f"{k} {v:3d}" for k, v in d["images"].items())
+              + f" (escalated {d['images_escalated']}) | dets " + " ".join(f"{k} {v}%" for k, v in d["detections_pct"].items()))
+
+    # ---- 7. image-level accuracy -------------------------------------------------------------
+    # The image's class is its NEU category (filename prefix, e.g. crazing_90.jpg -> crazing). An image
+    # is correct if at least one detection that passes the severity rule's per-class min confidence has
+    # that class. A few images also carry GT boxes of another class; they are counted and reported.
+    def image_class(n: str) -> str:
+        c = next((c for c in sorted(NEU_CLASSES, key=len, reverse=True) if n.startswith(c + "_")), None)
+        if c is None:
+            raise AssertionError(f"cannot get the class from the file name {n}")
+        return c
+    mixed = sorted(n for n in names if len({g["class_id"] for g in gts[n]}) > 1)
+    img_acc = {}
+    for m in models:
+        per = {c: {"images": 0, "correct": 0, "wrong_class_only": 0, "no_detection": 0} for c in NEU_CLASSES}
+        for n in names:
+            c = image_class(n)
+            kept = [d for d in at_conf[m][n] if d["confidence"] >= min_conf(d["class_name"])]
+            per[c]["images"] += 1
+            if any(d["class_name"] == c for d in kept):
+                per[c]["correct"] += 1
+            elif kept:
+                per[c]["wrong_class_only"] += 1
+            else:
+                per[c]["no_detection"] += 1
+        for v in per.values():
+            v["accuracy"] = round(v["correct"] / v["images"], 4)
+        tot = {k: sum(v[k] for v in per.values()) for k in ("images", "correct", "wrong_class_only", "no_detection")}
+        tot["accuracy"] = round(tot["correct"] / tot["images"], 4)
+        img_acc[m] = {"overall": tot, "per_class": per}
+    print(f"[7] image-level accuracy (>= 1 detection of the correct class, per-class min conf); "
+          f"images with mixed-class GT: {mixed}")
+    for m, d in img_acc.items():
+        o = d["overall"]
+        print(f"    {m:5s} overall {o['correct']}/{o['images']} ({o['accuracy']:.1%}), wrong class only "
+              f"{o['wrong_class_only']}, no detection {o['no_detection']} | "
+              + " ".join(f"{c} {v['correct']}/{v['images']}" for c, v in d["per_class"].items()))
 
     head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=PHASE1_DIR).stdout.strip()
     import ultralytics, ai_edge_litert  # noqa: E401
@@ -339,6 +409,12 @@ def main() -> None:
         "ultralytics_val": val_maps,
         "severity_config": SEVERITY_CONFIG,
         "severity_demo": demo,
+        "severity_distribution_val": sev_dist,
+        "image_level_accuracy_val": {"definition": "image correct if >= 1 detection (conf 0.25 decode, then "
+                                                   "severity per-class min confidence) has the image's class "
+                                                   "(NEU category = filename prefix)",
+                                     "images_with_mixed_class_gt": mixed,
+                                     **img_acc},
     }
     out_json = args.results_dir / "phase1_checks.json"
     out_json.write_text(json.dumps(out, indent=2), encoding="utf-8")

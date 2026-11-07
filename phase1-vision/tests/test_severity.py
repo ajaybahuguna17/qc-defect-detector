@@ -30,20 +30,30 @@ class AreaThresholdTests(unittest.TestCase):
     def level(self, ratio):
         return assess_severity([det(ratio)], W, H).level
 
+    def test_threshold_values(self):
+        # p40 / p70 / p90 of the val ground-truth area ratios (scripts/tune_severity.py)
+        self.assertEqual(SEVERITY_CONFIG["area_thresholds"],
+                         {"low_max": 0.082, "medium_max": 0.184, "high_max": 0.359})
+
     def test_low(self):
         self.assertEqual(self.level(0.005), "Low")
-        self.assertEqual(self.level(0.0199), "Low")
+        self.assertEqual(self.level(0.0819), "Low")
+
+    def level_px(self, bw, bh):
+        # whole-pixel box, so the ratio is exactly the threshold (no float drift from ratio * H)
+        return assess_severity([{"class_name": "scratches", "confidence": 0.9,
+                                 "bbox_xyxy": [0, 0, bw, bh]}], W, H).level
 
     def test_medium_boundaries(self):
-        self.assertEqual(self.level(0.02), "Medium")   # 0.02 is inclusive lower bound of Medium
-        self.assertEqual(self.level(0.0499), "Medium")
+        self.assertEqual(self.level_px(80, 41), "Medium")   # 3280 / 40000 = 0.082, inclusive lower bound
+        self.assertEqual(self.level(0.1839), "Medium")
 
     def test_high_boundaries(self):
-        self.assertEqual(self.level(0.05), "High")
-        self.assertEqual(self.level(0.10), "High")     # 0.10 itself is still High
+        self.assertEqual(self.level_px(80, 92), "High")     # 7360 / 40000 = 0.184
+        self.assertEqual(self.level_px(40, 359), "High")    # 14360 / 40000 = 0.359, still High
 
     def test_critical(self):
-        self.assertEqual(self.level(0.1001), "Critical")
+        self.assertEqual(self.level(0.3591), "Critical")
         self.assertEqual(self.level(0.8), "Critical")
 
 
@@ -81,7 +91,7 @@ class ClassMinConfidenceTests(unittest.TestCase):
 
     def test_crazing_kept_at_0_39(self):
         # Real case from the Colab run: crazing_90.jpg, conf 0.39.
-        r = assess_severity([det(0.03, conf=0.39, cls="crazing")], W, H)
+        r = assess_severity([det(0.10, conf=0.39, cls="crazing")], W, H)
         self.assertEqual(r.level, "Medium")
         self.assertEqual(r.defect_count, 1)
 
@@ -124,22 +134,22 @@ class CountEscalationTests(unittest.TestCase):
         self.assertFalse(r.escalated)
 
     def test_three_defects_escalate_one_level(self):
-        r = assess_severity([det(0.01), det(0.01), det(0.03)], W, H)
+        r = assess_severity([det(0.01), det(0.01), det(0.10)], W, H)
         self.assertEqual(r.level, "High")  # worst is Medium, +1 -> High
         self.assertTrue(r.escalated)
         self.assertEqual(r.defect_count, 3)
 
     def test_escalation_capped_at_critical(self):
-        r = assess_severity([det(0.2), det(0.01), det(0.01)], W, H)
+        r = assess_severity([det(0.5), det(0.01), det(0.01)], W, H)
         self.assertEqual(r.level, "Critical")
         self.assertFalse(r.escalated)
 
 
 class AggregationAndGeometryTests(unittest.TestCase):
     def test_image_level_is_worst_detection(self):
-        r = assess_severity([det(0.01), det(0.07)], W, H)
+        r = assess_severity([det(0.01), det(0.25)], W, H)
         self.assertEqual(r.level, "High")
-        self.assertAlmostEqual(r.max_area_ratio, 0.07, places=6)
+        self.assertAlmostEqual(r.max_area_ratio, 0.25, places=6)
 
     def test_bbox_clipped_to_image(self):
         # box twice the image size -> clipped to full image -> ratio 1.0
@@ -173,10 +183,10 @@ class ConfigTests(unittest.TestCase):
     def test_class_weight_changes_level(self):
         cfg = copy.deepcopy(SEVERITY_CONFIG)
         cfg["class_area_weight"]["scratches"] = 3.0
-        r = assess_severity([det(0.02)], W, H, config=cfg)  # 0.02 * 3 = 0.06 -> High
+        r = assess_severity([det(0.10)], W, H, config=cfg)  # 0.10 * 3 = 0.30 -> High
         self.assertEqual(r.level, "High")
         # default config untouched
-        self.assertEqual(assess_severity([det(0.02)], W, H).level, "Medium")
+        self.assertEqual(assess_severity([det(0.10)], W, H).level, "Medium")
 
     def test_default_class_weights_are_neutral(self):
         self.assertTrue(all(v == 1.0 for v in SEVERITY_CONFIG["class_area_weight"].values()))

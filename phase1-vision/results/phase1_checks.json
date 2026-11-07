@@ -1,6 +1,6 @@
 {
-  "generated_utc": "2026-11-07T16:20:41+00:00",
-  "git_commit": "b5ced13f24ed23deb62eeefd6b9d4152c347bf13",
+  "generated_utc": "2026-11-07T16:34:14+00:00",
+  "git_commit": "16ac9981d4a812f72b77b91e4ce1b8b5bafb074d",
   "colab_run_commit": "25551ad3dc282ffd39842684891887fdc35c37bc",
   "versions": {
     "python": "3.14.7",
@@ -1562,9 +1562,9 @@
       "scratches": 0.5
     },
     "area_thresholds": {
-      "low_max": 0.02,
-      "medium_max": 0.05,
-      "high_max": 0.1
+      "low_max": 0.082,
+      "medium_max": 0.184,
+      "high_max": 0.359
     },
     "count_escalation_threshold": 3,
     "class_area_weight": {
@@ -1580,11 +1580,11 @@
     {
       "image": "scratches_202.jpg",
       "fp32": {
-        "level": "Medium",
+        "level": "Low",
         "defect_count": 2,
         "max_area_ratio": 0.02649173007139325,
         "escalated": false,
-        "reason": "largest-severity defect 'scratches' area ratio 0.0265 -> Medium",
+        "reason": "largest-severity defect 'scratches' area ratio 0.0265 -> Low",
         "detections": [
           {
             "class_name": "scratches",
@@ -1597,7 +1597,7 @@
             ],
             "area_ratio": 0.02649173007139325,
             "weighted_area_ratio": 0.02649173007139325,
-            "level": "Medium"
+            "level": "Low"
           },
           {
             "class_name": "scratches",
@@ -1610,16 +1610,16 @@
             ],
             "area_ratio": 0.024986787099433423,
             "weighted_area_ratio": 0.024986787099433423,
-            "level": "Medium"
+            "level": "Low"
           }
         ]
       },
       "int8": {
-        "level": "Medium",
+        "level": "Low",
         "defect_count": 2,
         "max_area_ratio": 0.026677598530237448,
         "escalated": false,
-        "reason": "largest-severity defect 'scratches' area ratio 0.0267 -> Medium",
+        "reason": "largest-severity defect 'scratches' area ratio 0.0267 -> Low",
         "detections": [
           {
             "class_name": "scratches",
@@ -1632,7 +1632,7 @@
             ],
             "area_ratio": 0.026677598530237448,
             "weighted_area_ratio": 0.026677598530237448,
-            "level": "Medium"
+            "level": "Low"
           },
           {
             "class_name": "scratches",
@@ -1645,7 +1645,7 @@
             ],
             "area_ratio": 0.024207456563587765,
             "weighted_area_ratio": 0.024207456563587765,
-            "level": "Medium"
+            "level": "Low"
           }
         ]
       },
@@ -1654,11 +1654,11 @@
     {
       "image": "crazing_90.jpg",
       "fp32": {
-        "level": "Critical",
+        "level": "High",
         "defect_count": 1,
         "max_area_ratio": 0.3375547996919686,
         "escalated": false,
-        "reason": "largest-severity defect 'crazing' area ratio 0.3376 -> Critical",
+        "reason": "largest-severity defect 'crazing' area ratio 0.3376 -> High",
         "detections": [
           {
             "class_name": "crazing",
@@ -1671,16 +1671,16 @@
             ],
             "area_ratio": 0.3375547996919686,
             "weighted_area_ratio": 0.3375547996919686,
-            "level": "Critical"
+            "level": "High"
           }
         ]
       },
       "int8": {
-        "level": "Critical",
+        "level": "High",
         "defect_count": 1,
         "max_area_ratio": 0.3384720753627178,
         "escalated": false,
-        "reason": "largest-severity defect 'crazing' area ratio 0.3385 -> Critical",
+        "reason": "largest-severity defect 'crazing' area ratio 0.3385 -> High",
         "detections": [
           {
             "class_name": "crazing",
@@ -1693,7 +1693,7 @@
             ],
             "area_ratio": 0.3384720753627178,
             "weighted_area_ratio": 0.3384720753627178,
-            "level": "Critical"
+            "level": "High"
           }
         ]
       },
@@ -1702,11 +1702,11 @@
     {
       "image": "crazing_141.jpg",
       "fp32": {
-        "level": "Critical",
+        "level": "High",
         "defect_count": 2,
         "max_area_ratio": 0.18858082121532788,
         "escalated": false,
-        "reason": "largest-severity defect 'crazing' area ratio 0.1886 -> Critical",
+        "reason": "largest-severity defect 'crazing' area ratio 0.1886 -> High",
         "detections": [
           {
             "class_name": "crazing",
@@ -1719,7 +1719,7 @@
             ],
             "area_ratio": 0.08057104018094942,
             "weighted_area_ratio": 0.08057104018094942,
-            "level": "High"
+            "level": "Low"
           },
           {
             "class_name": "crazing",
@@ -1732,16 +1732,16 @@
             ],
             "area_ratio": 0.18858082121532788,
             "weighted_area_ratio": 0.18858082121532788,
-            "level": "Critical"
+            "level": "High"
           }
         ]
       },
       "int8": {
-        "level": "Critical",
+        "level": "High",
         "defect_count": 2,
         "max_area_ratio": 0.19139016242452198,
         "escalated": false,
-        "reason": "largest-severity defect 'crazing' area ratio 0.1914 -> Critical",
+        "reason": "largest-severity defect 'crazing' area ratio 0.1914 -> High",
         "detections": [
           {
             "class_name": "crazing",
@@ -1754,7 +1754,7 @@
             ],
             "area_ratio": 0.08171558887173265,
             "weighted_area_ratio": 0.08171558887173265,
-            "level": "High"
+            "level": "Low"
           },
           {
             "class_name": "crazing",
@@ -1767,7 +1767,7 @@
             ],
             "area_ratio": 0.19139016242452198,
             "weighted_area_ratio": 0.19139016242452198,
-            "level": "Critical"
+            "level": "High"
           }
         ]
       },
@@ -1806,7 +1806,7 @@
             ],
             "area_ratio": 0.04541382506391997,
             "weighted_area_ratio": 0.04541382506391997,
-            "level": "Medium"
+            "level": "Low"
           },
           {
             "class_name": "patches",
@@ -1819,7 +1819,7 @@
             ],
             "area_ratio": 0.24209022968259997,
             "weighted_area_ratio": 0.24209022968259997,
-            "level": "Critical"
+            "level": "High"
           }
         ]
       },
@@ -1828,7 +1828,7 @@
         "defect_count": 3,
         "max_area_ratio": 0.42241857232260516,
         "escalated": false,
-        "reason": "largest-severity defect 'patches' area ratio 0.2254 -> Critical",
+        "reason": "largest-severity defect 'patches' area ratio 0.4224 -> Critical",
         "detections": [
           {
             "class_name": "patches",
@@ -1841,7 +1841,7 @@
             ],
             "area_ratio": 0.04425425214613806,
             "weighted_area_ratio": 0.04425425214613806,
-            "level": "Medium"
+            "level": "Low"
           },
           {
             "class_name": "patches",
@@ -1854,7 +1854,7 @@
             ],
             "area_ratio": 0.22544141707724338,
             "weighted_area_ratio": 0.22544141707724338,
-            "level": "Critical"
+            "level": "High"
           },
           {
             "class_name": "patches",
@@ -1876,11 +1876,11 @@
     {
       "image": "patches_136.jpg",
       "fp32": {
-        "level": "Critical",
+        "level": "High",
         "defect_count": 1,
         "max_area_ratio": 0.28775902942271203,
         "escalated": false,
-        "reason": "largest-severity defect 'patches' area ratio 0.2878 -> Critical",
+        "reason": "largest-severity defect 'patches' area ratio 0.2878 -> High",
         "detections": [
           {
             "class_name": "patches",
@@ -1893,16 +1893,16 @@
             ],
             "area_ratio": 0.28775902942271203,
             "weighted_area_ratio": 0.28775902942271203,
-            "level": "Critical"
+            "level": "High"
           }
         ]
       },
       "int8": {
-        "level": "Critical",
+        "level": "High",
         "defect_count": 1,
         "max_area_ratio": 0.27183977904694623,
         "escalated": false,
-        "reason": "largest-severity defect 'patches' area ratio 0.2718 -> Critical",
+        "reason": "largest-severity defect 'patches' area ratio 0.2718 -> High",
         "detections": [
           {
             "class_name": "patches",
@@ -1915,7 +1915,7 @@
             ],
             "area_ratio": 0.27183977904694623,
             "weighted_area_ratio": 0.27183977904694623,
-            "level": "Critical"
+            "level": "High"
           }
         ]
       },
@@ -1924,11 +1924,11 @@
     {
       "image": "inclusion_82.jpg",
       "fp32": {
-        "level": "High",
+        "level": "Low",
         "defect_count": 2,
         "max_area_ratio": 0.07290074027274422,
         "escalated": false,
-        "reason": "largest-severity defect 'inclusion' area ratio 0.0729 -> High",
+        "reason": "largest-severity defect 'inclusion' area ratio 0.0488 -> Low",
         "detections": [
           {
             "class_name": "inclusion",
@@ -1941,7 +1941,7 @@
             ],
             "area_ratio": 0.04875941849671944,
             "weighted_area_ratio": 0.04875941849671944,
-            "level": "Medium"
+            "level": "Low"
           },
           {
             "class_name": "inclusion",
@@ -1954,16 +1954,16 @@
             ],
             "area_ratio": 0.07290074027274422,
             "weighted_area_ratio": 0.07290074027274422,
-            "level": "High"
+            "level": "Low"
           }
         ]
       },
       "int8": {
-        "level": "High",
+        "level": "Low",
         "defect_count": 2,
         "max_area_ratio": 0.06797541031777218,
         "escalated": false,
-        "reason": "largest-severity defect 'inclusion' area ratio 0.0680 -> High",
+        "reason": "largest-severity defect 'inclusion' area ratio 0.0452 -> Low",
         "detections": [
           {
             "class_name": "inclusion",
@@ -1976,7 +1976,7 @@
             ],
             "area_ratio": 0.04515738644600642,
             "weighted_area_ratio": 0.04515738644600642,
-            "level": "Medium"
+            "level": "Low"
           },
           {
             "class_name": "inclusion",
@@ -1989,7 +1989,7 @@
             ],
             "area_ratio": 0.06797541031777218,
             "weighted_area_ratio": 0.06797541031777218,
-            "level": "High"
+            "level": "Low"
           }
         ]
       },
@@ -1998,11 +1998,11 @@
     {
       "image": "inclusion_135.jpg",
       "fp32": {
-        "level": "Critical",
+        "level": "Medium",
         "defect_count": 1,
         "max_area_ratio": 0.14910517654184804,
         "escalated": false,
-        "reason": "largest-severity defect 'inclusion' area ratio 0.1491 -> Critical",
+        "reason": "largest-severity defect 'inclusion' area ratio 0.1491 -> Medium",
         "detections": [
           {
             "class_name": "inclusion",
@@ -2015,16 +2015,16 @@
             ],
             "area_ratio": 0.14910517654184804,
             "weighted_area_ratio": 0.14910517654184804,
-            "level": "Critical"
+            "level": "Medium"
           }
         ]
       },
       "int8": {
-        "level": "Critical",
+        "level": "Medium",
         "defect_count": 1,
         "max_area_ratio": 0.14366228959715954,
         "escalated": false,
-        "reason": "largest-severity defect 'inclusion' area ratio 0.1437 -> Critical",
+        "reason": "largest-severity defect 'inclusion' area ratio 0.1437 -> Medium",
         "detections": [
           {
             "class_name": "inclusion",
@@ -2037,7 +2037,7 @@
             ],
             "area_ratio": 0.14366228959715954,
             "weighted_area_ratio": 0.14366228959715954,
-            "level": "Critical"
+            "level": "Medium"
           }
         ]
       },
@@ -2046,11 +2046,11 @@
     {
       "image": "crazing_61.jpg",
       "fp32": {
-        "level": "Critical",
+        "level": "High",
         "defect_count": 1,
         "max_area_ratio": 0.18901476503564482,
         "escalated": false,
-        "reason": "largest-severity defect 'crazing' area ratio 0.1890 -> Critical",
+        "reason": "largest-severity defect 'crazing' area ratio 0.1890 -> High",
         "detections": [
           {
             "class_name": "crazing",
@@ -2063,16 +2063,16 @@
             ],
             "area_ratio": 0.18901476503564482,
             "weighted_area_ratio": 0.18901476503564482,
-            "level": "Critical"
+            "level": "High"
           }
         ]
       },
       "int8": {
-        "level": "Critical",
+        "level": "High",
         "defect_count": 1,
         "max_area_ratio": 0.1890435137816664,
         "escalated": false,
-        "reason": "largest-severity defect 'crazing' area ratio 0.1890 -> Critical",
+        "reason": "largest-severity defect 'crazing' area ratio 0.1890 -> High",
         "detections": [
           {
             "class_name": "crazing",
@@ -2085,7 +2085,7 @@
             ],
             "area_ratio": 0.1890435137816664,
             "weighted_area_ratio": 0.1890435137816664,
-            "level": "Critical"
+            "level": "High"
           }
         ]
       },
@@ -2097,8 +2097,8 @@
         "level": "Critical",
         "defect_count": 4,
         "max_area_ratio": 0.2108804042179836,
-        "escalated": false,
-        "reason": "largest-severity defect 'scratches' area ratio 0.1494 -> Critical",
+        "escalated": true,
+        "reason": "largest-severity defect 'scratches' area ratio 0.2109 -> High; 4 defects >= 3 -> raised to Critical",
         "detections": [
           {
             "class_name": "scratches",
@@ -2111,7 +2111,7 @@
             ],
             "area_ratio": 0.14938976287841796,
             "weighted_area_ratio": 0.14938976287841796,
-            "level": "Critical"
+            "level": "Medium"
           },
           {
             "class_name": "scratches",
@@ -2124,7 +2124,7 @@
             ],
             "area_ratio": 0.06905866102261643,
             "weighted_area_ratio": 0.06905866102261643,
-            "level": "High"
+            "level": "Low"
           },
           {
             "class_name": "scratches",
@@ -2137,7 +2137,7 @@
             ],
             "area_ratio": 0.05047474461374804,
             "weighted_area_ratio": 0.05047474461374804,
-            "level": "High"
+            "level": "Low"
           },
           {
             "class_name": "scratches",
@@ -2150,7 +2150,7 @@
             ],
             "area_ratio": 0.2108804042179836,
             "weighted_area_ratio": 0.2108804042179836,
-            "level": "Critical"
+            "level": "High"
           }
         ]
       },
@@ -2158,8 +2158,8 @@
         "level": "Critical",
         "defect_count": 4,
         "max_area_ratio": 0.20548545853425457,
-        "escalated": false,
-        "reason": "largest-severity defect 'scratches' area ratio 0.1831 -> Critical",
+        "escalated": true,
+        "reason": "largest-severity defect 'scratches' area ratio 0.2055 -> High; 4 defects >= 3 -> raised to Critical",
         "detections": [
           {
             "class_name": "scratches",
@@ -2172,7 +2172,7 @@
             ],
             "area_ratio": 0.18306884492156242,
             "weighted_area_ratio": 0.18306884492156242,
-            "level": "Critical"
+            "level": "Medium"
           },
           {
             "class_name": "scratches",
@@ -2185,7 +2185,7 @@
             ],
             "area_ratio": 0.04420532215893036,
             "weighted_area_ratio": 0.04420532215893036,
-            "level": "Medium"
+            "level": "Low"
           },
           {
             "class_name": "scratches",
@@ -2198,7 +2198,7 @@
             ],
             "area_ratio": 0.20548545853425457,
             "weighted_area_ratio": 0.20548545853425457,
-            "level": "Critical"
+            "level": "High"
           },
           {
             "class_name": "scratches",
@@ -2211,7 +2211,7 @@
             ],
             "area_ratio": 0.07533952198701445,
             "weighted_area_ratio": 0.07533952198701445,
-            "level": "High"
+            "level": "Low"
           }
         ]
       },
@@ -2220,11 +2220,11 @@
     {
       "image": "rolled-in_scale_275.jpg",
       "fp32": {
-        "level": "Critical",
+        "level": "Medium",
         "defect_count": 2,
         "max_area_ratio": 0.10927496696483285,
         "escalated": false,
-        "reason": "largest-severity defect 'rolled-in_scale' area ratio 0.1093 -> Critical",
+        "reason": "largest-severity defect 'rolled-in_scale' area ratio 0.1093 -> Medium",
         "detections": [
           {
             "class_name": "rolled-in_scale",
@@ -2237,7 +2237,7 @@
             ],
             "area_ratio": 0.07568892905581306,
             "weighted_area_ratio": 0.07568892905581306,
-            "level": "High"
+            "level": "Low"
           },
           {
             "class_name": "rolled-in_scale",
@@ -2250,16 +2250,16 @@
             ],
             "area_ratio": 0.10927496696483285,
             "weighted_area_ratio": 0.10927496696483285,
-            "level": "Critical"
+            "level": "Medium"
           }
         ]
       },
       "int8": {
-        "level": "Critical",
+        "level": "Medium",
         "defect_count": 2,
         "max_area_ratio": 0.10735881088752648,
         "escalated": false,
-        "reason": "largest-severity defect 'rolled-in_scale' area ratio 0.1074 -> Critical",
+        "reason": "largest-severity defect 'rolled-in_scale' area ratio 0.1074 -> Medium",
         "detections": [
           {
             "class_name": "rolled-in_scale",
@@ -2272,7 +2272,7 @@
             ],
             "area_ratio": 0.0752623257319603,
             "weighted_area_ratio": 0.0752623257319603,
-            "level": "High"
+            "level": "Low"
           },
           {
             "class_name": "rolled-in_scale",
@@ -2285,11 +2285,321 @@
             ],
             "area_ratio": 0.10735881088752648,
             "weighted_area_ratio": 0.10735881088752648,
-            "level": "Critical"
+            "level": "Medium"
           }
         ]
       },
       "fp32_old_rule_level": "Critical"
     }
-  ]
+  ],
+  "severity_distribution_val": {
+    "pt": {
+      "images": {
+        "Low": 31,
+        "Medium": 98,
+        "High": 90,
+        "Critical": 116,
+        "None": 25
+      },
+      "images_pct": {
+        "Low": 8.6,
+        "Medium": 27.2,
+        "High": 25.0,
+        "Critical": 32.2,
+        "None": 6.9
+      },
+      "images_escalated": 90,
+      "detections_before_escalation": {
+        "Low": 304,
+        "Medium": 219,
+        "High": 126,
+        "Critical": 78
+      },
+      "detections_pct": {
+        "Low": 41.8,
+        "Medium": 30.1,
+        "High": 17.3,
+        "Critical": 10.7
+      }
+    },
+    "fp32": {
+      "images": {
+        "Low": 31,
+        "Medium": 98,
+        "High": 90,
+        "Critical": 116,
+        "None": 25
+      },
+      "images_pct": {
+        "Low": 8.6,
+        "Medium": 27.2,
+        "High": 25.0,
+        "Critical": 32.2,
+        "None": 6.9
+      },
+      "images_escalated": 90,
+      "detections_before_escalation": {
+        "Low": 304,
+        "Medium": 219,
+        "High": 126,
+        "Critical": 78
+      },
+      "detections_pct": {
+        "Low": 41.8,
+        "Medium": 30.1,
+        "High": 17.3,
+        "Critical": 10.7
+      }
+    },
+    "int8": {
+      "images": {
+        "Low": 33,
+        "Medium": 89,
+        "High": 92,
+        "Critical": 115,
+        "None": 31
+      },
+      "images_pct": {
+        "Low": 9.2,
+        "Medium": 24.7,
+        "High": 25.6,
+        "Critical": 31.9,
+        "None": 8.6
+      },
+      "images_escalated": 92,
+      "detections_before_escalation": {
+        "Low": 315,
+        "Medium": 196,
+        "High": 128,
+        "Critical": 75
+      },
+      "detections_pct": {
+        "Low": 44.1,
+        "Medium": 27.5,
+        "High": 17.9,
+        "Critical": 10.5
+      }
+    },
+    "ground_truth": {
+      "images": {
+        "Low": 26,
+        "Medium": 80,
+        "High": 123,
+        "Critical": 131,
+        "None": 0
+      },
+      "images_pct": {
+        "Low": 7.2,
+        "Medium": 22.2,
+        "High": 34.2,
+        "Critical": 36.4,
+        "None": 0.0
+      },
+      "images_escalated": 118,
+      "detections_before_escalation": {
+        "Low": 347,
+        "Medium": 259,
+        "High": 173,
+        "Critical": 87
+      },
+      "detections_pct": {
+        "Low": 40.1,
+        "Medium": 29.9,
+        "High": 20.0,
+        "Critical": 10.0
+      }
+    }
+  },
+  "image_level_accuracy_val": {
+    "definition": "image correct if >= 1 detection (conf 0.25 decode, then severity per-class min confidence) has the image's class (NEU category = filename prefix)",
+    "images_with_mixed_class_gt": [
+      "crazing_112.jpg",
+      "crazing_152.jpg",
+      "crazing_20.jpg",
+      "patches_168.jpg",
+      "patches_172.jpg",
+      "patches_198.jpg",
+      "patches_230.jpg",
+      "patches_245.jpg",
+      "patches_274.jpg",
+      "pitted_surface_171.jpg",
+      "pitted_surface_197.jpg",
+      "pitted_surface_205.jpg",
+      "pitted_surface_209.jpg",
+      "pitted_surface_236.jpg",
+      "pitted_surface_281.jpg",
+      "pitted_surface_291.jpg",
+      "scratches_110.jpg",
+      "scratches_111.jpg",
+      "scratches_122.jpg",
+      "scratches_131.jpg",
+      "scratches_138.jpg",
+      "scratches_140.jpg",
+      "scratches_141.jpg",
+      "scratches_143.jpg",
+      "scratches_224.jpg",
+      "scratches_229.jpg",
+      "scratches_231.jpg",
+      "scratches_242.jpg"
+    ],
+    "pt": {
+      "overall": {
+        "images": 360,
+        "correct": 334,
+        "wrong_class_only": 1,
+        "no_detection": 25,
+        "accuracy": 0.9278
+      },
+      "per_class": {
+        "crazing": {
+          "images": 60,
+          "correct": 56,
+          "wrong_class_only": 0,
+          "no_detection": 4,
+          "accuracy": 0.9333
+        },
+        "inclusion": {
+          "images": 60,
+          "correct": 60,
+          "wrong_class_only": 0,
+          "no_detection": 0,
+          "accuracy": 1.0
+        },
+        "patches": {
+          "images": 60,
+          "correct": 60,
+          "wrong_class_only": 0,
+          "no_detection": 0,
+          "accuracy": 1.0
+        },
+        "pitted_surface": {
+          "images": 60,
+          "correct": 55,
+          "wrong_class_only": 0,
+          "no_detection": 5,
+          "accuracy": 0.9167
+        },
+        "rolled-in_scale": {
+          "images": 60,
+          "correct": 44,
+          "wrong_class_only": 0,
+          "no_detection": 16,
+          "accuracy": 0.7333
+        },
+        "scratches": {
+          "images": 60,
+          "correct": 59,
+          "wrong_class_only": 1,
+          "no_detection": 0,
+          "accuracy": 0.9833
+        }
+      }
+    },
+    "fp32": {
+      "overall": {
+        "images": 360,
+        "correct": 334,
+        "wrong_class_only": 1,
+        "no_detection": 25,
+        "accuracy": 0.9278
+      },
+      "per_class": {
+        "crazing": {
+          "images": 60,
+          "correct": 56,
+          "wrong_class_only": 0,
+          "no_detection": 4,
+          "accuracy": 0.9333
+        },
+        "inclusion": {
+          "images": 60,
+          "correct": 60,
+          "wrong_class_only": 0,
+          "no_detection": 0,
+          "accuracy": 1.0
+        },
+        "patches": {
+          "images": 60,
+          "correct": 60,
+          "wrong_class_only": 0,
+          "no_detection": 0,
+          "accuracy": 1.0
+        },
+        "pitted_surface": {
+          "images": 60,
+          "correct": 55,
+          "wrong_class_only": 0,
+          "no_detection": 5,
+          "accuracy": 0.9167
+        },
+        "rolled-in_scale": {
+          "images": 60,
+          "correct": 44,
+          "wrong_class_only": 0,
+          "no_detection": 16,
+          "accuracy": 0.7333
+        },
+        "scratches": {
+          "images": 60,
+          "correct": 59,
+          "wrong_class_only": 1,
+          "no_detection": 0,
+          "accuracy": 0.9833
+        }
+      }
+    },
+    "int8": {
+      "overall": {
+        "images": 360,
+        "correct": 327,
+        "wrong_class_only": 2,
+        "no_detection": 31,
+        "accuracy": 0.9083
+      },
+      "per_class": {
+        "crazing": {
+          "images": 60,
+          "correct": 51,
+          "wrong_class_only": 0,
+          "no_detection": 9,
+          "accuracy": 0.85
+        },
+        "inclusion": {
+          "images": 60,
+          "correct": 59,
+          "wrong_class_only": 1,
+          "no_detection": 0,
+          "accuracy": 0.9833
+        },
+        "patches": {
+          "images": 60,
+          "correct": 60,
+          "wrong_class_only": 0,
+          "no_detection": 0,
+          "accuracy": 1.0
+        },
+        "pitted_surface": {
+          "images": 60,
+          "correct": 53,
+          "wrong_class_only": 0,
+          "no_detection": 7,
+          "accuracy": 0.8833
+        },
+        "rolled-in_scale": {
+          "images": 60,
+          "correct": 45,
+          "wrong_class_only": 0,
+          "no_detection": 15,
+          "accuracy": 0.75
+        },
+        "scratches": {
+          "images": 60,
+          "correct": 59,
+          "wrong_class_only": 1,
+          "no_detection": 0,
+          "accuracy": 0.9833
+        }
+      }
+    }
+  }
 }

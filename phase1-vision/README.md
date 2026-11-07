@@ -13,7 +13,8 @@ phase1-vision/
 ├── scripts/
 │   ├── prepare_data.py           # NEU-DET download, VOC->YOLO, seeded 80/20 split, overlap check, data.yaml
 │   ├── export_tflite.py          # best.pt -> FP32/INT8 .tflite, asserts [1, 10, N], writes model_io.json
-│   ├── check_models.py           # post-run checks (any OS): hashes, full-val .pt vs TFLite, P/R sweep, severity demo
+│   ├── check_models.py           # post-run checks (any OS): hashes, full-val .pt vs TFLite, P/R sweep, severity, image accuracy
+│   ├── tune_severity.py          # severity area cutoffs = p40/p70/p90 of val GT box area ratios
 │   └── tflite_utils.py           # reference preprocess + decode + NMS (the Android code must match it)
 ├── severity.py                   # deterministic Low/Medium/High/Critical rule (one config dict)
 ├── tests/                        # unit tests: severity rule, decoder
@@ -61,9 +62,14 @@ classes, the export fails, or the output is not `[1, 10, N]`, it raises.
 ## Severity rule (`severity.py`)
 
 Ignore detections below their class's min confidence (crazing 0.25, all others 0.50; the model is under-confident on crazing, 0.25 chosen from the val sweep in `results/phase1_checks.json`). Per detection, area ratio = bbox area / image area:
-`< 0.02` Low, `0.02-0.05` Medium, `0.05-0.10` High, `> 0.10` Critical. Image level = worst
+`< 0.082` Low, `0.082-0.184` Medium, `0.184-0.359` High, `> 0.359` Critical. Image level = worst
 detection, raised one level if there are 3+ valid defects. All thresholds are in `SEVERITY_CONFIG`.
 Per-class area weights exist but are all 1.0 (class-neutral) until we have domain input.
+
+The area cutoffs are the 40th / 70th / 90th percentiles of the 866 ground-truth box area ratios in
+the val split (`scripts/tune_severity.py` -> `results/severity_thresholds.json`), so ~40 % of boxes
+are Low, 30 % Medium, 20 % High, 10 % Critical before escalation. **They were tuned on NEU 200x200
+crops and must be re-tuned on real camera images in Phase 3.**
 
 ## Dataset
 

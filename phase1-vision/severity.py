@@ -18,10 +18,15 @@ The rule
    and multiply it by ``class_area_weight[class_name]`` (all 1.0 by default, so the
    rule is class-neutral until a process engineer gives per-class weights).
 3. Map the weighted area ratio to a level (defaults):
-       ratio <  0.02            -> Low
-       0.02 <= ratio <  0.05    -> Medium
-       0.05 <= ratio <= 0.10    -> High
-       ratio >  0.10            -> Critical
+       ratio <  0.082           -> Low
+       0.082 <= ratio <  0.184  -> Medium
+       0.184 <= ratio <= 0.359  -> High
+       ratio >  0.359           -> Critical
+   The cutoffs are the 40th / 70th / 90th percentiles of the area ratio of all 866
+   ground-truth boxes in the NEU-DET val split (scripts/tune_severity.py ->
+   results/severity_thresholds.json), so about 40 % of boxes are Low, 30 % Medium,
+   20 % High, 10 % Critical before escalation. They were tuned on 200x200 NEU crops and
+   MUST be re-tuned on real camera images in Phase 3.
 4. The image level is the highest per-detection level.
 5. If ``defect_count >= count_escalation_threshold`` (default 3), raise the image
    level by one step (capped at Critical).
@@ -59,10 +64,12 @@ SEVERITY_CONFIG: Dict[str, Any] = {
     },
     # Upper bounds (exclusive for Low/Medium, inclusive for High) of the weighted area ratio.
     #   ratio < low_max -> Low ; ratio < medium_max -> Medium ; ratio <= high_max -> High ; else Critical
+    # Tuned 2026-11-07: p40 / p70 / p90 of the val ground-truth box area ratios
+    # (scripts/tune_severity.py). NEU 200x200 crops only: re-tune on camera images in Phase 3.
     "area_thresholds": {
-        "low_max": 0.02,
-        "medium_max": 0.05,
-        "high_max": 0.10,
+        "low_max": 0.082,
+        "medium_max": 0.184,
+        "high_max": 0.359,
     },
     # Number of valid detections in one image that raises the level by one step.
     "count_escalation_threshold": 3,

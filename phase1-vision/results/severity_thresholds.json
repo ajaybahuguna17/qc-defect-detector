@@ -1,0 +1,175 @@
+{
+  "source": "data/dataset/labels/val (360 images, ground-truth boxes)",
+  "method": "area_ratio = w*h (normalised YOLO label); cutoffs = p40/p70/p90 of all boxes, rounded to 3 decimals",
+  "overall": {
+    "n": 866,
+    "mean": 0.1673,
+    "min": 0.0066,
+    "max": 0.985,
+    "percentiles": {
+      "p10": 0.0229,
+      "p25": 0.0481,
+      "p40": 0.0816,
+      "p50": 0.1092,
+      "p70": 0.1838,
+      "p75": 0.2181,
+      "p90": 0.3594,
+      "p95": 0.5553,
+      "p99": 0.9769
+    }
+  },
+  "per_class": {
+    "crazing": {
+      "n": 134,
+      "mean": 0.2274,
+      "min": 0.056,
+      "max": 0.5145,
+      "percentiles": {
+        "p10": 0.1167,
+        "p25": 0.144,
+        "p40": 0.1729,
+        "p50": 0.2162,
+        "p70": 0.2703,
+        "p75": 0.2783,
+        "p90": 0.3703,
+        "p95": 0.4411,
+        "p99": 0.4831
+      }
+    },
+    "inclusion": {
+      "n": 223,
+      "mean": 0.0604,
+      "min": 0.0066,
+      "max": 0.3054,
+      "percentiles": {
+        "p10": 0.0123,
+        "p25": 0.0181,
+        "p40": 0.0289,
+        "p50": 0.0378,
+        "p70": 0.0694,
+        "p75": 0.081,
+        "p90": 0.1332,
+        "p95": 0.2019,
+        "p99": 0.2473
+      }
+    },
+    "patches": {
+      "n": 180,
+      "mean": 0.1227,
+      "min": 0.0101,
+      "max": 0.5088,
+      "percentiles": {
+        "p10": 0.0342,
+        "p25": 0.0519,
+        "p40": 0.0757,
+        "p50": 0.0937,
+        "p70": 0.1407,
+        "p75": 0.1551,
+        "p90": 0.2669,
+        "p95": 0.3209,
+        "p99": 0.4622
+      }
+    },
+    "pitted_surface": {
+      "n": 84,
+      "mean": 0.5753,
+      "min": 0.0639,
+      "max": 0.985,
+      "percentiles": {
+        "p10": 0.2156,
+        "p25": 0.34,
+        "p40": 0.4845,
+        "p50": 0.5614,
+        "p70": 0.748,
+        "p75": 0.8693,
+        "p90": 0.9786,
+        "p95": 0.9801,
+        "p99": 0.985
+      }
+    },
+    "rolled-in_scale": {
+      "n": 137,
+      "mean": 0.1442,
+      "min": 0.0142,
+      "max": 0.4759,
+      "percentiles": {
+        "p10": 0.0383,
+        "p25": 0.0639,
+        "p40": 0.1034,
+        "p50": 0.1237,
+        "p70": 0.1865,
+        "p75": 0.1993,
+        "p90": 0.269,
+        "p95": 0.3024,
+        "p99": 0.4173
+      }
+    },
+    "scratches": {
+      "n": 108,
+      "mean": 0.0994,
+      "min": 0.0116,
+      "max": 0.3731,
+      "percentiles": {
+        "p10": 0.0324,
+        "p25": 0.0463,
+        "p40": 0.0646,
+        "p50": 0.0774,
+        "p70": 0.129,
+        "p75": 0.1363,
+        "p90": 0.1856,
+        "p95": 0.2277,
+        "p99": 0.3031
+      }
+    }
+  },
+  "area_thresholds": {
+    "low_max": 0.082,
+    "medium_max": 0.184,
+    "high_max": 0.359
+  },
+  "box_level_share_overall": {
+    "Low": 0.4007,
+    "Medium": 0.2991,
+    "High": 0.1998,
+    "Critical": 0.1005
+  },
+  "box_level_share_per_class": {
+    "crazing": {
+      "Low": 0.0149,
+      "Medium": 0.4104,
+      "High": 0.4552,
+      "Critical": 0.1194
+    },
+    "inclusion": {
+      "Low": 0.7534,
+      "Medium": 0.1749,
+      "High": 0.0717,
+      "Critical": 0.0
+    },
+    "patches": {
+      "Low": 0.4389,
+      "Medium": 0.3722,
+      "High": 0.1556,
+      "Critical": 0.0333
+    },
+    "pitted_surface": {
+      "Low": 0.0238,
+      "Medium": 0.0357,
+      "High": 0.2143,
+      "Critical": 0.7262
+    },
+    "rolled-in_scale": {
+      "Low": 0.2993,
+      "Medium": 0.3869,
+      "High": 0.292,
+      "Critical": 0.0219
+    },
+    "scratches": {
+      "Low": 0.5093,
+      "Medium": 0.3889,
+      "High": 0.0926,
+      "Critical": 0.0093
+    }
+  },
+  "caveat": "Tuned on NEU-DET 200x200 crops. Re-tune on real camera images in Phase 3."
+}

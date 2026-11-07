@@ -121,6 +121,27 @@ IoU >= 0.5), from `results/phase1_checks.json` -> `agreement_full_val`:
 
 (The 10-image check in `phase1_results.json` gave 100 % / 92 %; the full set confirms it.)
 
+### Image-level accuracy (what the operator sees)
+
+% of the 360 val images where at least one detection has the image's class, after the conf-0.25
+decode and the severity rule's per-class min confidence (crazing 0.25, others 0.50). The image's
+class is its NEU category (filename prefix). From `results/phase1_checks.json` ->
+`image_level_accuracy_val`:
+
+| Class | `.pt` / FP32 | INT8 |
+|---|---|---|
+| crazing | 56 / 60 (93 %) | 51 / 60 (85 %) |
+| inclusion | 60 / 60 (100 %) | 59 / 60 (98 %) |
+| patches | 60 / 60 (100 %) | 60 / 60 (100 %) |
+| pitted_surface | 55 / 60 (92 %) | 53 / 60 (88 %) |
+| rolled-in_scale | 44 / 60 (73 %) | 45 / 60 (75 %) |
+| scratches | 59 / 60 (98 %) | 59 / 60 (98 %) |
+| **overall** | **334 / 360 (92.8 %)** | **327 / 360 (90.8 %)** |
+| misses: wrong class only / nothing kept | 1 / 25 | 2 / 31 |
+
+Almost every miss is "no detection kept", not a wrong class. 28 val images also have a GT box of a
+second class; they are scored by their category only.
+
 INT8 is 3.7x smaller than FP32 and loses 0.029 mAP50 / 0.048 mAP50-95 at the same 320 input.
 Pick FP32 if the phone is fast enough, otherwise INT8 (to be decided with the Phase 3
 on-device benchmarks).
