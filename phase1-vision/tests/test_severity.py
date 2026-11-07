@@ -71,6 +71,47 @@ class ConfidenceFilterTests(unittest.TestCase):
         self.assertEqual(r.max_area_ratio, 0.0)
 
 
+class ClassMinConfidenceTests(unittest.TestCase):
+    def test_config_values(self):
+        cmc = SEVERITY_CONFIG["class_min_confidence"]
+        self.assertEqual(cmc["crazing"], 0.30)
+        for name in ("inclusion", "patches", "pitted_surface", "rolled-in_scale", "scratches"):
+            self.assertEqual(cmc[name], 0.50, name)
+        self.assertEqual(SEVERITY_CONFIG["min_confidence"], 0.50)
+
+    def test_crazing_kept_at_0_39(self):
+        # Real case from the Colab run: crazing_90.jpg, conf 0.39.
+        r = assess_severity([det(0.03, conf=0.39, cls="crazing")], W, H)
+        self.assertEqual(r.level, "Medium")
+        self.assertEqual(r.defect_count, 1)
+
+    def test_crazing_threshold_inclusive(self):
+        self.assertEqual(assess_severity([det(0.01, conf=0.30, cls="crazing")], W, H).defect_count, 1)
+        self.assertIsNone(assess_severity([det(0.01, conf=0.29, cls="crazing")], W, H).level)
+
+    def test_other_classes_still_need_0_5(self):
+        for name in ("inclusion", "patches", "pitted_surface", "rolled-in_scale", "scratches"):
+            self.assertIsNone(assess_severity([det(0.03, conf=0.39, cls=name)], W, H).level, name)
+
+    def test_unknown_class_uses_global_min(self):
+        self.assertIsNone(assess_severity([det(0.03, conf=0.45, cls="unknown")], W, H).level)
+        self.assertEqual(assess_severity([det(0.03, conf=0.5, cls="unknown")], W, H).defect_count, 1)
+
+    def test_low_conf_crazing_counts_toward_escalation(self):
+        dets = [det(0.01, conf=0.35, cls="crazing")] * 2 + [det(0.01, conf=0.35, cls="scratches")]
+        r = assess_severity(dets, W, H)
+        self.assertEqual(r.defect_count, 2)
+        self.assertFalse(r.escalated)
+        r = assess_severity([det(0.01, conf=0.35, cls="crazing")] * 3, W, H)
+        self.assertTrue(r.escalated)
+        self.assertEqual(r.level, "Medium")
+
+    def test_config_without_class_dict_falls_back(self):
+        cfg = copy.deepcopy(SEVERITY_CONFIG)
+        del cfg["class_min_confidence"]
+        self.assertIsNone(assess_severity([det(0.03, conf=0.39, cls="crazing")], W, H, config=cfg).level)
+
+
 class CountEscalationTests(unittest.TestCase):
     def test_two_defects_no_escalation(self):
         r = assess_severity([det(0.01), det(0.01)], W, H)

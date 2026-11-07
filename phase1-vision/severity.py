@@ -8,7 +8,10 @@ must never decide it.
 
 The rule
 --------
-1. Drop every detection with ``confidence < min_confidence`` (default 0.5).
+1. Drop every detection with ``confidence < class_min_confidence[class_name]``
+   (0.30 for crazing, 0.50 for every other class; classes not in the dict use
+   ``min_confidence`` = 0.50). Crazing gets a lower bar because the trained model
+   is under-confident on it (e.g. 0.39 on val image crazing_90.jpg).
 2. For each remaining detection compute
        area_ratio = (bbox area, clipped to the image) / (image width * image height)
    and multiply it by ``class_area_weight[class_name]`` (all 1.0 by default, so the
@@ -38,8 +41,19 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 LEVELS: tuple = ("Low", "Medium", "High", "Critical")
 
 SEVERITY_CONFIG: Dict[str, Any] = {
-    # Detections below this confidence are ignored entirely (not counted, not sized).
+    # Detections below their class's min confidence are ignored entirely (not counted, not sized).
+    # Default for any class not listed in class_min_confidence.
     "min_confidence": 0.50,
+    # Per-class min confidence. crazing is lower because the model is under-confident on it
+    # (Colab run 2026-11-07: crazing val recall 0.34, conf 0.39 on crazing_90.jpg).
+    "class_min_confidence": {
+        "crazing": 0.30,
+        "inclusion": 0.50,
+        "patches": 0.50,
+        "pitted_surface": 0.50,
+        "rolled-in_scale": 0.50,
+        "scratches": 0.50,
+    },
     # Upper bounds (exclusive for Low/Medium, inclusive for High) of the weighted area ratio.
     #   ratio < low_max -> Low ; ratio < medium_max -> Medium ; ratio <= high_max -> High ; else Critical
     "area_thresholds": {
@@ -75,7 +89,7 @@ class DetectionSeverity:
 @dataclass
 class SeverityResult:
     level: Optional[str]                 # "Low" | "Medium" | "High" | "Critical" | None (no valid defect)
-    defect_count: int                    # detections with confidence >= min_confidence
+    defect_count: int                    # detections with confidence >= their class min confidence
     max_area_ratio: float                # largest weighted area ratio among valid detections
     escalated: bool                      # True if the count rule raised the level
     reason: str
@@ -126,15 +140,16 @@ def assess_severity(
         raise ValueError(f"image size must be positive, got {image_width}x{image_height}")
 
     min_conf = float(cfg["min_confidence"])
+    class_min_conf = cfg.get("class_min_confidence", {})
     thresholds = cfg["area_thresholds"]
     weights = cfg.get("class_area_weight", {})
 
     scored: List[DetectionSeverity] = []
     for det in detections:
         conf = float(det["confidence"])
-        if conf < min_conf:
-            continue
         name = str(det["class_name"])
+        if conf < float(class_min_conf.get(name, min_conf)):
+            continue
         ratio = _bbox_area_ratio(det["bbox_xyxy"], image_width, image_height)
         weighted = ratio * float(weights.get(name, 1.0))
         scored.append(
@@ -154,7 +169,7 @@ def assess_severity(
             defect_count=0,
             max_area_ratio=0.0,
             escalated=False,
-            reason=f"no detection with confidence >= {min_conf}",
+            reason="no detection at or above its class min confidence",
         )
 
     worst = max(scored, key=lambda d: LEVELS.index(d.level))

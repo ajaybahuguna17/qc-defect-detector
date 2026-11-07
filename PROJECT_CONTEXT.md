@@ -3,7 +3,7 @@
 **Project Title:** Real-Time Industrial Defect Detection & Quality-Control Assistant  
 **Theme:** Manufacturing & Industry 4.0 (Bharat AI-SoC Challenge 2026–27, PS5)  
 **Target device:** Arm Android phone (TFLite for vision, ExecuTorch for the Llama advisor)  
-**Current Status:** Phase 1 (vision) ACTIVE. Phase 2 and Phase 3 NOT STARTED.  
+**Current Status:** Phase 1 (vision) COMPLETE. Phase 2 (advisory LLM) NEXT. Phase 3 NOT STARTED.  
 **Last Updated:** 2026-11-07  
 
 > Honesty rule for this file: only mark something done when it has been run and the
@@ -78,24 +78,29 @@ NNAPI is deprecated on recent Android, so use the GPU delegate or XNNPACK.
 
 | Phase | Scope | Output | Status |
 | :--- | :--- | :--- | :--- |
-| **Phase 1: Vision model** | NEU-DET → YOLOv8n trained in Colab → evaluation → severity rule → TFLite FP32 + INT8 export → sanity check → I/O documentation | `.tflite` x2, `labels.txt`, `MODEL_IO.md`, results JSON + plots, notebook, `requirements.txt` | **ACTIVE**, code ready, Colab run pending |
-| **Phase 2: Advisory LLM** | Llama-3.2-1B-Instruct → ExecuTorch `.pte` (XNNPACK, 8da4w quantisation) + tokenizer, prompt/parser fixes, runtime on Arm | real `.pte`, tokenizer, measured TTFT and tokens/s | **NOT STARTED** |
+| **Phase 1: Vision model** | NEU-DET → YOLOv8n trained in Colab → evaluation → severity rule → TFLite FP32 + INT8 export → sanity check → I/O documentation | `.tflite` x2, `labels.txt`, `MODEL_IO.md`, results JSON + plots, notebook, `requirements.txt` | **COMPLETE** (2026-11-07) |
+| **Phase 2: Advisory LLM** | Llama-3.2-1B-Instruct → ExecuTorch `.pte` (XNNPACK, 8da4w quantisation) + tokenizer, prompt/parser fixes, runtime on Arm | real `.pte`, tokenizer, measured TTFT and tokens/s | **NEXT** (not started) |
 | **Phase 3: Android app** | CameraX + TFLite + ExecuTorch, alerting UI, Room logging, on-device benchmarks, deliverables (README, report, demo video) | APK, benchmark results, report, video | **NOT STARTED** |
 
-### Phase 1 tracker
+### Phase 1 tracker (COMPLETE, 2026-11-07)
+
+Source of every number: `phase1-vision/results/phase1_results.json` from the Colab run of commit `25551ad`
+(Tesla T4, Ultralytics 8.4.198, torch 2.14.1, Python 3.13). Run name `neu_yolov8n_320_e100_s42`.
+**Models are on Google Drive under `MyDrive/qc-defect-detector/phase1/neu_yolov8n_320_e100_s42/models/`, not in git**
+(`best.pt`, `defect_yolov8n_320_{fp32,int8}.tflite`, `labels.txt`, `model_io.json`).
 
 | # | Step | Status | Evidence / notes |
 | :--- | :--- | :--- | :--- |
-| 1 | Dataset ready | ✅ Done (local) | `prepare_data.py` run on 2026-11-07 against the real NEU-DET: **1,440 train / 360 val**, 3,322 / 867 boxes, seed 42, 0 train/val overlap (checked in memory and on disk), identical split on re-run. Output dirs are cleared before writing. `data.yaml` has no absolute path. Colab re-creates it with the same script. |
-| 2 | Trained in Colab | ⏳ Not started | `notebooks/train_colab.ipynb` ready: YOLOv8n, imgsz 320, 100 epochs (configurable), seed 42. The older `best_neu_yolov8n.pt` on Student 3's disk was trained outside this repo (2025-10-24, unknown split). **It is not used** and its numbers must not be reported. |
-| 3 | Evaluation (mAP50, mAP50-95, per-class P/R, confusion matrix) | ⏳ Not started | Notebook step 5. |
-| 4 | Severity rule | ✅ Done (code + tests) | `phase1-vision/severity.py`, 21 unit tests passing. The thresholds are a first guess and have not been tuned on real data. |
-| 5 | TFLite export FP32 + INT8 | ⏳ Code ready, not run | `scripts/export_tflite.py`: no COCO / cached-file fallbacks, asserts `[1, 10, N]`, INT8 calibrated on train images. The export only runs on Linux/macOS, so it runs in Colab. |
-| 6 | TFLite sanity check | ⏳ Code ready, not run | Notebook steps 7–8: `.pt` vs FP32 vs INT8 on the same 10 val images, plus the mAP of each `.tflite` on val. Decoder unit-tested (7 tests). |
-| 7 | I/O format documented | 🟡 Partial | `phase1-vision/MODEL_IO.md` has the expected values from the pinned toolchain (NCHW float32 `[1,3,320,320]` in 0–1, output `[1,10,2100]` with normalised xywh and no NMS). Every value is marked TODO until the Colab run confirms it. |
-| 8 | Notebook / results / requirements in repo | 🟡 Partial | Notebook and pinned `requirements.txt` committed. `phase1-vision/results/` (JSON + plots) will be committed after the Colab run. |
+| 1 | Dataset ready | ✅ Done | Real NEU-DET, `prepare_data.py` seed 42: **1,440 train / 360 val**, 0 train/val overlap (checked in memory and on disk, also in Colab). `data.yaml` has no absolute path. |
+| 2 | Trained in Colab | ✅ Done | YOLOv8n from COCO-pretrained weights, imgsz 320, batch 32, seed 42, **100/100 epochs** (patience 30), **15.6 min** on a T4. Curves: `results/results.png`, `results/results.csv`. |
+| 3 | Evaluation | ✅ Done | `best.pt` on val: **mAP50 0.769, mAP50-95 0.446**, P 0.714, R 0.736. Per-class mAP50: crazing **0.406**, inclusion 0.856, patches 0.925, pitted_surface 0.850, rolled-in_scale **0.652**, scratches 0.927. **Weak classes: crazing** (R 0.34, mAP50-95 0.149) and **rolled-in_scale** (mAP50-95 0.307). Confusion matrices and PR/P/R/F1 curves in `results/`. |
+| 4 | Severity rule | ✅ Done | `phase1-vision/severity.py`, 28 unit tests passing. Per-class min confidence added after the run: **crazing 0.30**, all others 0.50 (the model gave only 0.39 on `crazing_90.jpg`, which the 0.5 rule dropped). Area thresholds unchanged and still untuned. Demo on 10 val images: `results/severity_demo.png` (made with the old 0.5-for-all rule). |
+| 5 | TFLite export FP32 + INT8 | ✅ Done | `export_tflite.py` in Colab. **FP32 12.69 MB, INT8 3.44 MB** (INT8 calibrated on 30 % of train, float32 I/O). Both asserted `[1, 10, 2100]`. |
+| 6 | TFLite sanity check | ✅ Done | Val mAP50 / mAP50-95: **FP32 0.744 / 0.420, INT8 0.707 / 0.367** (vs `.pt` 0.769 / 0.446). Same 10 val images vs `.pt` (conf 0.25): **FP32 25/25 matched (100 %), INT8 23/25 (92 %)**. |
+| 7 | I/O format documented | ✅ Done | `phase1-vision/MODEL_IO.md`, all values confirmed on the exported files: input NCHW float32 `[1,3,320,320]` in 0–1, output float32 `[1,10,2100]`, boxes normalised xywh (max abs 1.01), sigmoid class scores, no NMS. |
+| 8 | Notebook / results / requirements in repo | ✅ Done | Notebook, pinned `requirements.txt`, and `phase1-vision/results/` (JSON, CSV, PNGs; no model files) committed. |
 
-### Phase 2 status: NOT STARTED
+### Phase 2 status: NEXT (not started)
 
 - **No Llama model has been exported.** `phase2-reasoning/models/llama3_2_1b_int4_xnnpack.pte` (local, gitignored) is a **1 KB placeholder** (`ET01` header + repeated `AA BB CC DD`) written by the script's simulation path. `phase2-reasoning/models/llama_pte_metadata.json` describes that placeholder, not a real model.
 - `export_llama_pte.py` does not load Llama weights, does not quantise, and reports success even when it only simulates. Its memory figure ("< 750 MB") is a formula output, not a measurement. A real 1B 8da4w `.pte` is about 1 GB.
@@ -128,3 +133,4 @@ No Android code, logging, UI or benchmarks exist yet.
 | 2026-11-03 | Phase 2 | Antigravity AI | Scaffolded `phase2-reasoning/`: prompt builder/parser, `setup_executorch.py`, `export_llama_pte.py` (simulation only, no real Llama export), 13 string-level tests. |
 | 2026-11-07 | All | Audit | `AUDIT_REPORT.md`: the Llama `.pte` is a placeholder; both `.tflite` files are COCO (output `[1,84,8400]`); split overlap; Windows path in `data.yaml`; several false claims in this file. |
 | 2026-11-07 | Phase 1 | Claude Code | Phase 1 fixes (audit C3, C4, C6-vision, I6, I9, part of I1, C9). `prepare_data.py`: clears output dirs, private seeded RNG, fails on any train/val overlap (in memory and on disk), prints final counts, synthetic data only with `--synthetic`, CWD-independent defaults. `data.yaml`: no absolute path. `export_tflite.py` rewritten: no COCO or cached-TFLite fallbacks, FP32 + INT8 (train-calibrated) via Ultralytics LiteRT, asserts `[1,10,N]`, prints the real input shape/layout/dtype, writes `model_io.json`. New `scripts/tflite_utils.py` (reference decoder), `severity.py` (deterministic rule) and `tests/` (28 tests). New `requirements.txt` (pinned), `MODEL_IO.md`. Colab notebook rewritten end to end (clone → pinned install → NEU-DET → train imgsz 320 → val → export → .pt vs TFLite comparison → TFLite mAP → severity demo → Drive). Deleted the stray root `yolov8n.pt` / `yolov8n.onnx` and the wrong COCO `.tflite` + `model_metadata.json`. Removed the false claims from this file and added the 3-phase plan and the Phase 1 tracker. |
+| 2026-11-07 | Phase 1 | Claude Code | **Phase 1 complete.** Colab run of `25551ad` (T4, 100 epochs, 15.6 min): `best.pt` val mAP50 0.769 / mAP50-95 0.446; FP32 TFLite 0.744 / 0.420 (12.69 MB); INT8 TFLite 0.707 / 0.367 (3.44 MB); 10-image match vs `.pt` 100 % (FP32) / 92 % (INT8). Weak classes: crazing, rolled-in_scale. `MODEL_IO.md` filled with the confirmed values (NCHW float32 input, `[1,10,2100]` output, normalised boxes). `severity.py`: per-class min confidence (crazing 0.30, others 0.50), 7 new tests (35 total pass). Committed `phase1-vision/results/` (JSON, CSV, PNGs). Models stay on Google Drive. |

@@ -1,7 +1,7 @@
 # Phase 1: Vision defect detector (NEU-DET -> YOLOv8n -> TFLite)
 
 **Target:** Arm Android phone, TFLite (LiteRT) runtime.
-**Status:** code ready, **not yet trained/exported with this pipeline**. See the Phase 1 tracker in `../PROJECT_CONTEXT.md`.
+**Status:** COMPLETE. Trained, evaluated and exported in Colab on 2026-11-07 (commit `25551ad`). Val mAP50 0.769 (`.pt`), 0.744 (FP32 TFLite), 0.707 (INT8 TFLite). Results in `results/`, models on Google Drive (not in git). See the Phase 1 tracker in `../PROJECT_CONTEXT.md`.
 
 Pipeline: train in Google Colab -> evaluate -> severity rule -> export TFLite FP32 + INT8 -> sanity-check -> document.
 
@@ -56,7 +56,7 @@ classes, the export fails, or the output is not `[1, 10, N]`, it raises.
 
 ## Severity rule (`severity.py`)
 
-Ignore detections with conf < 0.5. Per detection, area ratio = bbox area / image area:
+Ignore detections below their class's min confidence (crazing 0.30, all others 0.50; the model is under-confident on crazing). Per detection, area ratio = bbox area / image area:
 `< 0.02` Low, `0.02-0.05` Medium, `0.05-0.10` High, `> 0.10` Critical. Image level = worst
 detection, raised one level if there are 3+ valid defects. All thresholds are in `SEVERITY_CONFIG`.
 Per-class area weights exist but are all 1.0 (class-neutral) until we have domain input.
