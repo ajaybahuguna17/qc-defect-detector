@@ -74,7 +74,7 @@ class ConfidenceFilterTests(unittest.TestCase):
 class ClassMinConfidenceTests(unittest.TestCase):
     def test_config_values(self):
         cmc = SEVERITY_CONFIG["class_min_confidence"]
-        self.assertEqual(cmc["crazing"], 0.30)
+        self.assertEqual(cmc["crazing"], 0.25)
         for name in ("inclusion", "patches", "pitted_surface", "rolled-in_scale", "scratches"):
             self.assertEqual(cmc[name], 0.50, name)
         self.assertEqual(SEVERITY_CONFIG["min_confidence"], 0.50)
@@ -85,9 +85,14 @@ class ClassMinConfidenceTests(unittest.TestCase):
         self.assertEqual(r.level, "Medium")
         self.assertEqual(r.defect_count, 1)
 
+    def test_crazing_kept_int8_0_299(self):
+        # Same image through the INT8 model: conf 0.2986. Must still count.
+        r = assess_severity([det(0.03, conf=0.2986, cls="crazing")], W, H)
+        self.assertEqual(r.defect_count, 1)
+
     def test_crazing_threshold_inclusive(self):
-        self.assertEqual(assess_severity([det(0.01, conf=0.30, cls="crazing")], W, H).defect_count, 1)
-        self.assertIsNone(assess_severity([det(0.01, conf=0.29, cls="crazing")], W, H).level)
+        self.assertEqual(assess_severity([det(0.01, conf=0.25, cls="crazing")], W, H).defect_count, 1)
+        self.assertIsNone(assess_severity([det(0.01, conf=0.24, cls="crazing")], W, H).level)
 
     def test_other_classes_still_need_0_5(self):
         for name in ("inclusion", "patches", "pitted_surface", "rolled-in_scale", "scratches"):
@@ -98,11 +103,11 @@ class ClassMinConfidenceTests(unittest.TestCase):
         self.assertEqual(assess_severity([det(0.03, conf=0.5, cls="unknown")], W, H).defect_count, 1)
 
     def test_low_conf_crazing_counts_toward_escalation(self):
-        dets = [det(0.01, conf=0.35, cls="crazing")] * 2 + [det(0.01, conf=0.35, cls="scratches")]
+        dets = [det(0.01, conf=0.27, cls="crazing")] * 2 + [det(0.01, conf=0.27, cls="scratches")]
         r = assess_severity(dets, W, H)
         self.assertEqual(r.defect_count, 2)
         self.assertFalse(r.escalated)
-        r = assess_severity([det(0.01, conf=0.35, cls="crazing")] * 3, W, H)
+        r = assess_severity([det(0.01, conf=0.27, cls="crazing")] * 3, W, H)
         self.assertTrue(r.escalated)
         self.assertEqual(r.level, "Medium")
 

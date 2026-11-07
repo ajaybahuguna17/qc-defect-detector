@@ -9,9 +9,10 @@ must never decide it.
 The rule
 --------
 1. Drop every detection with ``confidence < class_min_confidence[class_name]``
-   (0.30 for crazing, 0.50 for every other class; classes not in the dict use
+   (0.25 for crazing, 0.50 for every other class; classes not in the dict use
    ``min_confidence`` = 0.50). Crazing gets a lower bar because the trained model
-   is under-confident on it (e.g. 0.39 on val image crazing_90.jpg).
+   is under-confident on it (e.g. 0.39 FP32 / 0.299 INT8 on val image crazing_90.jpg).
+   0.25 was chosen from the val sweep in results/phase1_checks.json.
 2. For each remaining detection compute
        area_ratio = (bbox area, clipped to the image) / (image width * image height)
    and multiply it by ``class_area_weight[class_name]`` (all 1.0 by default, so the
@@ -45,9 +46,11 @@ SEVERITY_CONFIG: Dict[str, Any] = {
     # Default for any class not listed in class_min_confidence.
     "min_confidence": 0.50,
     # Per-class min confidence. crazing is lower because the model is under-confident on it
-    # (Colab run 2026-11-07: crazing val recall 0.34, conf 0.39 on crazing_90.jpg).
+    # (crazing_90.jpg: 0.39 FP32, 0.299 INT8). 0.25 chosen from the 360-image val sweep
+    # (results/phase1_checks.json): crazing images flagged FP32 56/60, INT8 51/60 (vs 25/21 at 0.50),
+    # precision no worse than at 0.30, and 0 crazing detections on the 300 non-crazing images.
     "class_min_confidence": {
-        "crazing": 0.30,
+        "crazing": 0.25,
         "inclusion": 0.50,
         "patches": 0.50,
         "pitted_surface": 0.50,

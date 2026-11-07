@@ -1,7 +1,7 @@
 # Phase 1: Vision defect detector (NEU-DET -> YOLOv8n -> TFLite)
 
 **Target:** Arm Android phone, TFLite (LiteRT) runtime.
-**Status:** COMPLETE. Trained, evaluated and exported in Colab on 2026-11-07 (commit `25551ad`). Val mAP50 0.769 (`.pt`), 0.744 (FP32 TFLite), 0.707 (INT8 TFLite). Results in `results/`, models on Google Drive (not in git). See the Phase 1 tracker in `../PROJECT_CONTEXT.md`.
+**Status:** COMPLETE. Trained, evaluated and exported in Colab on 2026-11-07 (commit `25551ad`). Val mAP50 at the deployed 320 input: 0.744 (`.pt` and FP32 TFLite, identical), 0.715 (INT8 TFLite). The headline 0.769 for `.pt` was measured at 352 px, see `MODEL_IO.md`. Results in `results/`, models on Google Drive (not in git). See the Phase 1 tracker in `../PROJECT_CONTEXT.md`.
 
 Pipeline: train in Google Colab -> evaluate -> severity rule -> export TFLite FP32 + INT8 -> sanity-check -> document.
 
@@ -13,6 +13,7 @@ phase1-vision/
 ├── scripts/
 │   ├── prepare_data.py           # NEU-DET download, VOC->YOLO, seeded 80/20 split, overlap check, data.yaml
 │   ├── export_tflite.py          # best.pt -> FP32/INT8 .tflite, asserts [1, 10, N], writes model_io.json
+│   ├── check_models.py           # post-run checks (any OS): hashes, full-val .pt vs TFLite, P/R sweep, severity demo
 │   └── tflite_utils.py           # reference preprocess + decode + NMS (the Android code must match it)
 ├── severity.py                   # deterministic Low/Medium/High/Critical rule (one config dict)
 ├── tests/                        # unit tests: severity rule, decoder
@@ -43,6 +44,9 @@ python phase1-vision/scripts/prepare_data.py            # --seed 42 --split-rati
 python phase1-vision/scripts/export_tflite.py --weights best.pt \
     --data phase1-vision/data/dataset/data.yaml --imgsz 320 --precisions fp32,int8
 
+# post-training checks (any OS incl. Windows, CPU; models from Drive in models/exported/)
+python phase1-vision/scripts/check_models.py
+
 # unit tests (Python >= 3.10; decoder tests need numpy, they are skipped without it)
 python -m unittest discover -s phase1-vision/tests -v
 ```
@@ -56,7 +60,7 @@ classes, the export fails, or the output is not `[1, 10, N]`, it raises.
 
 ## Severity rule (`severity.py`)
 
-Ignore detections below their class's min confidence (crazing 0.30, all others 0.50; the model is under-confident on crazing). Per detection, area ratio = bbox area / image area:
+Ignore detections below their class's min confidence (crazing 0.25, all others 0.50; the model is under-confident on crazing, 0.25 chosen from the val sweep in `results/phase1_checks.json`). Per detection, area ratio = bbox area / image area:
 `< 0.02` Low, `0.02-0.05` Medium, `0.05-0.10` High, `> 0.10` Critical. Image level = worst
 detection, raised one level if there are 3+ valid defects. All thresholds are in `SEVERITY_CONFIG`.
 Per-class area weights exist but are all 1.0 (class-neutral) until we have domain input.

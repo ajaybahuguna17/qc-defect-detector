@@ -22,6 +22,17 @@ is `phase1-vision/scripts/tflite_utils.py` (`letterbox`, `to_input_tensor`,
 
 Sizes (confirmed): FP32 **12.69 MB** (12,693,225 bytes), INT8 **3.44 MB** (3,441,419 bytes).
 
+SHA-256 of the files on Google Drive (`results/phase1_checks.json` -> `files`). Check these after
+copying the models into the Android app:
+
+| File | Bytes | SHA-256 |
+|---|---|---|
+| `best_neu_yolov8n_320_e100_s42.pt` | 6,475,050 | `91d1f243e0e68e39be178a06cd8b7ad33128ed283a4707e743174f3b84a35a9c` |
+| `defect_yolov8n_320_fp32.tflite` | 12,693,225 | `cdb2afb1d29b42b71f6a6ac95ad1d7ef55221f5e6ac02e5974b57f2f8547d566` |
+| `defect_yolov8n_320_int8.tflite` | 3,441,419 | `54925b0ef977a6b6a0fa89bed75d1365b3c5ecc38d66f215773a699439000714` |
+| `labels.txt` | 67 | `950255ac9fb196b614f869f1151f8e132a79d72b7711a4b3f18026ff0ba77298` |
+| `model_io.json` | 1,435 | `1ca78eac2e405ab43836c06b2c24894a0016ff323f458386b4f31d985b826df4` |
+
 ## Input
 
 | Property | Value | Confirmed |
@@ -57,7 +68,7 @@ out = output[0]                       # [10, N]
 for each anchor i in 0..N-1:
     scores = out[4:10, i]
     cls    = argmax(scores); conf = scores[cls]
-    if conf < CONF_THRESHOLD: skip    # 0.25 for drawing boxes; severity uses its own per-class min (crazing 0.30, others 0.50)
+    if conf < CONF_THRESHOLD: skip    # 0.25 for drawing boxes; severity uses its own per-class min (crazing 0.25, others 0.50)
     cx, cy, w, h = out[0:4, i] * 320  # normalised -> input pixels (confirmed normalised)
     x1, y1 = cx - w/2, cy - h/2
     x2, y2 = cx + w/2, cy + h/2
@@ -83,19 +94,33 @@ Fixed by `data.yaml` / `labels.txt`:
 
 ## Accuracy (val split, 360 images)
 
-| Model | mAP50 | mAP50-95 |
-|---|---|---|
-| `best.pt` | 0.769 | 0.446 |
-| FP32 `.tflite` | 0.744 | 0.420 |
-| INT8 `.tflite` | 0.707 | 0.367 |
-
-Agreement with `best.pt` on 10 val images (conf 0.25, IoU 0.45), from
-`results/phase1_results.json` -> `compare_10_images`:
-
-| Model | `.pt` detections | TFLite detections | Matched | Match rate |
+| Model | Input the val ran at | mAP50 | mAP50-95 | Source |
 |---|---|---|---|---|
-| FP32 | 25 | 25 | 25 | 100 % |
-| INT8 | 25 | 24 | 23 | 92 % |
+| `best.pt` (Ultralytics default val) | 352x352 (rect, pad 0.5) | 0.769 | 0.446 | Colab and local, identical |
+| `best.pt` at the deployed size | **320x320** | **0.744** | **0.420** | local (`phase1_checks.json`) |
+| FP32 `.tflite` | 320x320 | **0.744** | **0.420** | Colab and local, identical |
+| INT8 `.tflite` | 320x320 | **0.715** | **0.372** | local x86 CPU; Colab gave 0.707 / 0.367 |
 
-INT8 is 3.7x smaller than FP32 and loses 0.037 mAP50 / 0.053 mAP50-95. Pick FP32 if the
-phone is fast enough, otherwise INT8 (to be decided with the Phase 3 on-device benchmarks).
+**The `.pt` -> FP32 gap (0.769 -> 0.744) is not a conversion loss.** `Model.val()` runs a `.pt`
+with rectangular batches and pad 0.5, so a 320 px image is evaluated on a 352x352 input.
+Exported models are always evaluated at their fixed 320x320 input. Evaluated at 320, the
+`.pt` gives exactly the FP32 numbers (0.7442 / 0.4204). **0.744 is the number to expect on the
+phone**, not 0.769. (Running at 352 on the phone would need a re-export at that size.)
+
+INT8 differs slightly between Colab and the local CPU (0.715 vs 0.707 mAP50) because
+quantised CPU kernels round differently on different hardware. Expect ~0.71 on the phone and
+measure it there.
+
+Agreement with `best.pt` on **all 360 val images** (conf 0.25, NMS IoU 0.45, match = same class,
+IoU >= 0.5), from `results/phase1_checks.json` -> `agreement_full_val`:
+
+| Model | `.pt` detections | TFLite detections | Matched | Match rate | Images identical | Mean IoU |
+|---|---|---|---|---|---|---|
+| FP32 | 949 | 949 | 949 | **100 %** | 360 / 360 | 1.000 |
+| INT8 | 949 | 911 | 868 | **91.5 %** | 268 / 360 | 0.907 |
+
+(The 10-image check in `phase1_results.json` gave 100 % / 92 %; the full set confirms it.)
+
+INT8 is 3.7x smaller than FP32 and loses 0.029 mAP50 / 0.048 mAP50-95 at the same 320 input.
+Pick FP32 if the phone is fast enough, otherwise INT8 (to be decided with the Phase 3
+on-device benchmarks).

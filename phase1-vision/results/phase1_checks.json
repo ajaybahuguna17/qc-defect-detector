@@ -1,0 +1,2295 @@
+{
+  "generated_utc": "2026-11-07T16:20:41+00:00",
+  "git_commit": "b5ced13f24ed23deb62eeefd6b9d4152c347bf13",
+  "colab_run_commit": "25551ad3dc282ffd39842684891887fdc35c37bc",
+  "versions": {
+    "python": "3.14.7",
+    "ultralytics": "8.4.198",
+    "ai-edge-litert": "2.3.0",
+    "numpy": "2.5.3",
+    "platform": "win32"
+  },
+  "files": {
+    "best_neu_yolov8n_320_e100_s42.pt": {
+      "sha256": "91d1f243e0e68e39be178a06cd8b7ad33128ed283a4707e743174f3b84a35a9c",
+      "size_bytes": 6475050
+    },
+    "defect_yolov8n_320_fp32.tflite": {
+      "sha256": "cdb2afb1d29b42b71f6a6ac95ad1d7ef55221f5e6ac02e5974b57f2f8547d566",
+      "size_bytes": 12693225
+    },
+    "defect_yolov8n_320_int8.tflite": {
+      "sha256": "54925b0ef977a6b6a0fa89bed75d1365b3c5ecc38d66f215773a699439000714",
+      "size_bytes": 3441419
+    },
+    "labels.txt": {
+      "sha256": "950255ac9fb196b614f869f1151f8e132a79d72b7711a4b3f18026ff0ba77298",
+      "size_bytes": 67
+    },
+    "model_io.json": {
+      "sha256": "1ca78eac2e405ab43836c06b2c24894a0016ff323f458386b4f31d985b826df4",
+      "size_bytes": 1435
+    }
+  },
+  "val_images": 360,
+  "agreement_full_val": {
+    "conf": 0.25,
+    "nms_iou": 0.45,
+    "match_iou": 0.5,
+    "fp32": {
+      "pt_detections": 949,
+      "tflite_detections": 949,
+      "matched": 949,
+      "images_identical": 360,
+      "match_rate": 1.0,
+      "mean_iou": 1.0,
+      "mean_abs_conf_diff": 0.0,
+      "images": 360
+    },
+    "int8": {
+      "pt_detections": 949,
+      "tflite_detections": 911,
+      "matched": 868,
+      "images_identical": 268,
+      "match_rate": 0.9146,
+      "mean_iou": 0.9065,
+      "mean_abs_conf_diff": 0.1179,
+      "images": 360
+    }
+  },
+  "pr_sweep": {
+    "note": "detections from conf 0.05 + NMS IoU 0.45, then filtered at each threshold; TP = same class, IoU >= 0.5 with an unused GT box",
+    "per_class": {
+      "pt": {
+        "crazing": {
+          "0.10": {
+            "tp": 71,
+            "fp": 164,
+            "fn": 63,
+            "precision": 0.3021,
+            "recall": 0.5299
+          },
+          "0.15": {
+            "tp": 63,
+            "fp": 107,
+            "fn": 71,
+            "precision": 0.3706,
+            "recall": 0.4701
+          },
+          "0.20": {
+            "tp": 54,
+            "fp": 81,
+            "fn": 80,
+            "precision": 0.4,
+            "recall": 0.403
+          },
+          "0.25": {
+            "tp": 48,
+            "fp": 66,
+            "fn": 86,
+            "precision": 0.4211,
+            "recall": 0.3582
+          },
+          "0.30": {
+            "tp": 42,
+            "fp": 53,
+            "fn": 92,
+            "precision": 0.4421,
+            "recall": 0.3134
+          },
+          "0.35": {
+            "tp": 39,
+            "fp": 40,
+            "fn": 95,
+            "precision": 0.4937,
+            "recall": 0.291
+          },
+          "0.40": {
+            "tp": 29,
+            "fp": 30,
+            "fn": 105,
+            "precision": 0.4915,
+            "recall": 0.2164
+          },
+          "0.45": {
+            "tp": 23,
+            "fp": 21,
+            "fn": 111,
+            "precision": 0.5227,
+            "recall": 0.1716
+          },
+          "0.50": {
+            "tp": 17,
+            "fp": 14,
+            "fn": 117,
+            "precision": 0.5484,
+            "recall": 0.1269
+          }
+        },
+        "inclusion": {
+          "0.10": {
+            "tp": 193,
+            "fp": 134,
+            "fn": 30,
+            "precision": 0.5902,
+            "recall": 0.8655
+          },
+          "0.15": {
+            "tp": 187,
+            "fp": 106,
+            "fn": 36,
+            "precision": 0.6382,
+            "recall": 0.8386
+          },
+          "0.20": {
+            "tp": 185,
+            "fp": 88,
+            "fn": 38,
+            "precision": 0.6777,
+            "recall": 0.8296
+          },
+          "0.25": {
+            "tp": 183,
+            "fp": 74,
+            "fn": 40,
+            "precision": 0.7121,
+            "recall": 0.8206
+          },
+          "0.30": {
+            "tp": 180,
+            "fp": 63,
+            "fn": 43,
+            "precision": 0.7407,
+            "recall": 0.8072
+          },
+          "0.35": {
+            "tp": 176,
+            "fp": 52,
+            "fn": 47,
+            "precision": 0.7719,
+            "recall": 0.7892
+          },
+          "0.40": {
+            "tp": 167,
+            "fp": 40,
+            "fn": 56,
+            "precision": 0.8068,
+            "recall": 0.7489
+          },
+          "0.45": {
+            "tp": 166,
+            "fp": 31,
+            "fn": 57,
+            "precision": 0.8426,
+            "recall": 0.7444
+          },
+          "0.50": {
+            "tp": 161,
+            "fp": 21,
+            "fn": 62,
+            "precision": 0.8846,
+            "recall": 0.722
+          }
+        },
+        "patches": {
+          "0.10": {
+            "tp": 163,
+            "fp": 68,
+            "fn": 17,
+            "precision": 0.7056,
+            "recall": 0.9056
+          },
+          "0.15": {
+            "tp": 163,
+            "fp": 58,
+            "fn": 17,
+            "precision": 0.7376,
+            "recall": 0.9056
+          },
+          "0.20": {
+            "tp": 163,
+            "fp": 49,
+            "fn": 17,
+            "precision": 0.7689,
+            "recall": 0.9056
+          },
+          "0.25": {
+            "tp": 162,
+            "fp": 40,
+            "fn": 18,
+            "precision": 0.802,
+            "recall": 0.9
+          },
+          "0.30": {
+            "tp": 162,
+            "fp": 30,
+            "fn": 18,
+            "precision": 0.8438,
+            "recall": 0.9
+          },
+          "0.35": {
+            "tp": 162,
+            "fp": 28,
+            "fn": 18,
+            "precision": 0.8526,
+            "recall": 0.9
+          },
+          "0.40": {
+            "tp": 161,
+            "fp": 25,
+            "fn": 19,
+            "precision": 0.8656,
+            "recall": 0.8944
+          },
+          "0.45": {
+            "tp": 158,
+            "fp": 21,
+            "fn": 22,
+            "precision": 0.8827,
+            "recall": 0.8778
+          },
+          "0.50": {
+            "tp": 158,
+            "fp": 17,
+            "fn": 22,
+            "precision": 0.9029,
+            "recall": 0.8778
+          }
+        },
+        "pitted_surface": {
+          "0.10": {
+            "tp": 73,
+            "fp": 40,
+            "fn": 11,
+            "precision": 0.646,
+            "recall": 0.869
+          },
+          "0.15": {
+            "tp": 73,
+            "fp": 23,
+            "fn": 11,
+            "precision": 0.7604,
+            "recall": 0.869
+          },
+          "0.20": {
+            "tp": 70,
+            "fp": 18,
+            "fn": 14,
+            "precision": 0.7955,
+            "recall": 0.8333
+          },
+          "0.25": {
+            "tp": 69,
+            "fp": 13,
+            "fn": 15,
+            "precision": 0.8415,
+            "recall": 0.8214
+          },
+          "0.30": {
+            "tp": 68,
+            "fp": 7,
+            "fn": 16,
+            "precision": 0.9067,
+            "recall": 0.8095
+          },
+          "0.35": {
+            "tp": 66,
+            "fp": 7,
+            "fn": 18,
+            "precision": 0.9041,
+            "recall": 0.7857
+          },
+          "0.40": {
+            "tp": 65,
+            "fp": 5,
+            "fn": 19,
+            "precision": 0.9286,
+            "recall": 0.7738
+          },
+          "0.45": {
+            "tp": 64,
+            "fp": 4,
+            "fn": 20,
+            "precision": 0.9412,
+            "recall": 0.7619
+          },
+          "0.50": {
+            "tp": 62,
+            "fp": 4,
+            "fn": 22,
+            "precision": 0.9394,
+            "recall": 0.7381
+          }
+        },
+        "rolled-in_scale": {
+          "0.10": {
+            "tp": 108,
+            "fp": 142,
+            "fn": 29,
+            "precision": 0.432,
+            "recall": 0.7883
+          },
+          "0.15": {
+            "tp": 100,
+            "fp": 112,
+            "fn": 37,
+            "precision": 0.4717,
+            "recall": 0.7299
+          },
+          "0.20": {
+            "tp": 95,
+            "fp": 93,
+            "fn": 42,
+            "precision": 0.5053,
+            "recall": 0.6934
+          },
+          "0.25": {
+            "tp": 92,
+            "fp": 74,
+            "fn": 45,
+            "precision": 0.5542,
+            "recall": 0.6715
+          },
+          "0.30": {
+            "tp": 90,
+            "fp": 58,
+            "fn": 47,
+            "precision": 0.6081,
+            "recall": 0.6569
+          },
+          "0.35": {
+            "tp": 83,
+            "fp": 49,
+            "fn": 54,
+            "precision": 0.6288,
+            "recall": 0.6058
+          },
+          "0.40": {
+            "tp": 74,
+            "fp": 43,
+            "fn": 63,
+            "precision": 0.6325,
+            "recall": 0.5401
+          },
+          "0.45": {
+            "tp": 63,
+            "fp": 31,
+            "fn": 74,
+            "precision": 0.6702,
+            "recall": 0.4599
+          },
+          "0.50": {
+            "tp": 56,
+            "fp": 28,
+            "fn": 81,
+            "precision": 0.6667,
+            "recall": 0.4088
+          }
+        },
+        "scratches": {
+          "0.10": {
+            "tp": 102,
+            "fp": 42,
+            "fn": 6,
+            "precision": 0.7083,
+            "recall": 0.9444
+          },
+          "0.15": {
+            "tp": 102,
+            "fp": 41,
+            "fn": 6,
+            "precision": 0.7133,
+            "recall": 0.9444
+          },
+          "0.20": {
+            "tp": 100,
+            "fp": 35,
+            "fn": 8,
+            "precision": 0.7407,
+            "recall": 0.9259
+          },
+          "0.25": {
+            "tp": 99,
+            "fp": 29,
+            "fn": 9,
+            "precision": 0.7734,
+            "recall": 0.9167
+          },
+          "0.30": {
+            "tp": 99,
+            "fp": 25,
+            "fn": 9,
+            "precision": 0.7984,
+            "recall": 0.9167
+          },
+          "0.35": {
+            "tp": 99,
+            "fp": 20,
+            "fn": 9,
+            "precision": 0.8319,
+            "recall": 0.9167
+          },
+          "0.40": {
+            "tp": 99,
+            "fp": 15,
+            "fn": 9,
+            "precision": 0.8684,
+            "recall": 0.9167
+          },
+          "0.45": {
+            "tp": 97,
+            "fp": 14,
+            "fn": 11,
+            "precision": 0.8739,
+            "recall": 0.8981
+          },
+          "0.50": {
+            "tp": 94,
+            "fp": 12,
+            "fn": 14,
+            "precision": 0.8868,
+            "recall": 0.8704
+          }
+        }
+      },
+      "fp32": {
+        "crazing": {
+          "0.10": {
+            "tp": 71,
+            "fp": 164,
+            "fn": 63,
+            "precision": 0.3021,
+            "recall": 0.5299
+          },
+          "0.15": {
+            "tp": 63,
+            "fp": 107,
+            "fn": 71,
+            "precision": 0.3706,
+            "recall": 0.4701
+          },
+          "0.20": {
+            "tp": 54,
+            "fp": 81,
+            "fn": 80,
+            "precision": 0.4,
+            "recall": 0.403
+          },
+          "0.25": {
+            "tp": 48,
+            "fp": 66,
+            "fn": 86,
+            "precision": 0.4211,
+            "recall": 0.3582
+          },
+          "0.30": {
+            "tp": 42,
+            "fp": 53,
+            "fn": 92,
+            "precision": 0.4421,
+            "recall": 0.3134
+          },
+          "0.35": {
+            "tp": 39,
+            "fp": 40,
+            "fn": 95,
+            "precision": 0.4937,
+            "recall": 0.291
+          },
+          "0.40": {
+            "tp": 29,
+            "fp": 30,
+            "fn": 105,
+            "precision": 0.4915,
+            "recall": 0.2164
+          },
+          "0.45": {
+            "tp": 23,
+            "fp": 21,
+            "fn": 111,
+            "precision": 0.5227,
+            "recall": 0.1716
+          },
+          "0.50": {
+            "tp": 17,
+            "fp": 14,
+            "fn": 117,
+            "precision": 0.5484,
+            "recall": 0.1269
+          }
+        },
+        "inclusion": {
+          "0.10": {
+            "tp": 193,
+            "fp": 134,
+            "fn": 30,
+            "precision": 0.5902,
+            "recall": 0.8655
+          },
+          "0.15": {
+            "tp": 187,
+            "fp": 106,
+            "fn": 36,
+            "precision": 0.6382,
+            "recall": 0.8386
+          },
+          "0.20": {
+            "tp": 185,
+            "fp": 88,
+            "fn": 38,
+            "precision": 0.6777,
+            "recall": 0.8296
+          },
+          "0.25": {
+            "tp": 183,
+            "fp": 74,
+            "fn": 40,
+            "precision": 0.7121,
+            "recall": 0.8206
+          },
+          "0.30": {
+            "tp": 180,
+            "fp": 63,
+            "fn": 43,
+            "precision": 0.7407,
+            "recall": 0.8072
+          },
+          "0.35": {
+            "tp": 176,
+            "fp": 52,
+            "fn": 47,
+            "precision": 0.7719,
+            "recall": 0.7892
+          },
+          "0.40": {
+            "tp": 167,
+            "fp": 40,
+            "fn": 56,
+            "precision": 0.8068,
+            "recall": 0.7489
+          },
+          "0.45": {
+            "tp": 166,
+            "fp": 31,
+            "fn": 57,
+            "precision": 0.8426,
+            "recall": 0.7444
+          },
+          "0.50": {
+            "tp": 161,
+            "fp": 21,
+            "fn": 62,
+            "precision": 0.8846,
+            "recall": 0.722
+          }
+        },
+        "patches": {
+          "0.10": {
+            "tp": 163,
+            "fp": 68,
+            "fn": 17,
+            "precision": 0.7056,
+            "recall": 0.9056
+          },
+          "0.15": {
+            "tp": 163,
+            "fp": 58,
+            "fn": 17,
+            "precision": 0.7376,
+            "recall": 0.9056
+          },
+          "0.20": {
+            "tp": 163,
+            "fp": 49,
+            "fn": 17,
+            "precision": 0.7689,
+            "recall": 0.9056
+          },
+          "0.25": {
+            "tp": 162,
+            "fp": 40,
+            "fn": 18,
+            "precision": 0.802,
+            "recall": 0.9
+          },
+          "0.30": {
+            "tp": 162,
+            "fp": 30,
+            "fn": 18,
+            "precision": 0.8438,
+            "recall": 0.9
+          },
+          "0.35": {
+            "tp": 162,
+            "fp": 28,
+            "fn": 18,
+            "precision": 0.8526,
+            "recall": 0.9
+          },
+          "0.40": {
+            "tp": 161,
+            "fp": 25,
+            "fn": 19,
+            "precision": 0.8656,
+            "recall": 0.8944
+          },
+          "0.45": {
+            "tp": 158,
+            "fp": 21,
+            "fn": 22,
+            "precision": 0.8827,
+            "recall": 0.8778
+          },
+          "0.50": {
+            "tp": 158,
+            "fp": 17,
+            "fn": 22,
+            "precision": 0.9029,
+            "recall": 0.8778
+          }
+        },
+        "pitted_surface": {
+          "0.10": {
+            "tp": 73,
+            "fp": 40,
+            "fn": 11,
+            "precision": 0.646,
+            "recall": 0.869
+          },
+          "0.15": {
+            "tp": 73,
+            "fp": 23,
+            "fn": 11,
+            "precision": 0.7604,
+            "recall": 0.869
+          },
+          "0.20": {
+            "tp": 70,
+            "fp": 18,
+            "fn": 14,
+            "precision": 0.7955,
+            "recall": 0.8333
+          },
+          "0.25": {
+            "tp": 69,
+            "fp": 13,
+            "fn": 15,
+            "precision": 0.8415,
+            "recall": 0.8214
+          },
+          "0.30": {
+            "tp": 68,
+            "fp": 7,
+            "fn": 16,
+            "precision": 0.9067,
+            "recall": 0.8095
+          },
+          "0.35": {
+            "tp": 66,
+            "fp": 7,
+            "fn": 18,
+            "precision": 0.9041,
+            "recall": 0.7857
+          },
+          "0.40": {
+            "tp": 65,
+            "fp": 5,
+            "fn": 19,
+            "precision": 0.9286,
+            "recall": 0.7738
+          },
+          "0.45": {
+            "tp": 64,
+            "fp": 4,
+            "fn": 20,
+            "precision": 0.9412,
+            "recall": 0.7619
+          },
+          "0.50": {
+            "tp": 62,
+            "fp": 4,
+            "fn": 22,
+            "precision": 0.9394,
+            "recall": 0.7381
+          }
+        },
+        "rolled-in_scale": {
+          "0.10": {
+            "tp": 108,
+            "fp": 142,
+            "fn": 29,
+            "precision": 0.432,
+            "recall": 0.7883
+          },
+          "0.15": {
+            "tp": 100,
+            "fp": 112,
+            "fn": 37,
+            "precision": 0.4717,
+            "recall": 0.7299
+          },
+          "0.20": {
+            "tp": 95,
+            "fp": 93,
+            "fn": 42,
+            "precision": 0.5053,
+            "recall": 0.6934
+          },
+          "0.25": {
+            "tp": 92,
+            "fp": 74,
+            "fn": 45,
+            "precision": 0.5542,
+            "recall": 0.6715
+          },
+          "0.30": {
+            "tp": 90,
+            "fp": 58,
+            "fn": 47,
+            "precision": 0.6081,
+            "recall": 0.6569
+          },
+          "0.35": {
+            "tp": 83,
+            "fp": 49,
+            "fn": 54,
+            "precision": 0.6288,
+            "recall": 0.6058
+          },
+          "0.40": {
+            "tp": 74,
+            "fp": 43,
+            "fn": 63,
+            "precision": 0.6325,
+            "recall": 0.5401
+          },
+          "0.45": {
+            "tp": 63,
+            "fp": 31,
+            "fn": 74,
+            "precision": 0.6702,
+            "recall": 0.4599
+          },
+          "0.50": {
+            "tp": 56,
+            "fp": 28,
+            "fn": 81,
+            "precision": 0.6667,
+            "recall": 0.4088
+          }
+        },
+        "scratches": {
+          "0.10": {
+            "tp": 102,
+            "fp": 42,
+            "fn": 6,
+            "precision": 0.7083,
+            "recall": 0.9444
+          },
+          "0.15": {
+            "tp": 102,
+            "fp": 41,
+            "fn": 6,
+            "precision": 0.7133,
+            "recall": 0.9444
+          },
+          "0.20": {
+            "tp": 100,
+            "fp": 35,
+            "fn": 8,
+            "precision": 0.7407,
+            "recall": 0.9259
+          },
+          "0.25": {
+            "tp": 99,
+            "fp": 29,
+            "fn": 9,
+            "precision": 0.7734,
+            "recall": 0.9167
+          },
+          "0.30": {
+            "tp": 99,
+            "fp": 25,
+            "fn": 9,
+            "precision": 0.7984,
+            "recall": 0.9167
+          },
+          "0.35": {
+            "tp": 99,
+            "fp": 20,
+            "fn": 9,
+            "precision": 0.8319,
+            "recall": 0.9167
+          },
+          "0.40": {
+            "tp": 99,
+            "fp": 15,
+            "fn": 9,
+            "precision": 0.8684,
+            "recall": 0.9167
+          },
+          "0.45": {
+            "tp": 97,
+            "fp": 14,
+            "fn": 11,
+            "precision": 0.8739,
+            "recall": 0.8981
+          },
+          "0.50": {
+            "tp": 94,
+            "fp": 12,
+            "fn": 14,
+            "precision": 0.8868,
+            "recall": 0.8704
+          }
+        }
+      },
+      "int8": {
+        "crazing": {
+          "0.10": {
+            "tp": 74,
+            "fp": 153,
+            "fn": 60,
+            "precision": 0.326,
+            "recall": 0.5522
+          },
+          "0.15": {
+            "tp": 69,
+            "fp": 109,
+            "fn": 65,
+            "precision": 0.3876,
+            "recall": 0.5149
+          },
+          "0.20": {
+            "tp": 61,
+            "fp": 70,
+            "fn": 73,
+            "precision": 0.4656,
+            "recall": 0.4552
+          },
+          "0.25": {
+            "tp": 51,
+            "fp": 54,
+            "fn": 83,
+            "precision": 0.4857,
+            "recall": 0.3806
+          },
+          "0.30": {
+            "tp": 40,
+            "fp": 43,
+            "fn": 94,
+            "precision": 0.4819,
+            "recall": 0.2985
+          },
+          "0.35": {
+            "tp": 38,
+            "fp": 35,
+            "fn": 96,
+            "precision": 0.5205,
+            "recall": 0.2836
+          },
+          "0.40": {
+            "tp": 29,
+            "fp": 23,
+            "fn": 105,
+            "precision": 0.5577,
+            "recall": 0.2164
+          },
+          "0.45": {
+            "tp": 19,
+            "fp": 13,
+            "fn": 115,
+            "precision": 0.5938,
+            "recall": 0.1418
+          },
+          "0.50": {
+            "tp": 16,
+            "fp": 12,
+            "fn": 118,
+            "precision": 0.5714,
+            "recall": 0.1194
+          }
+        },
+        "inclusion": {
+          "0.10": {
+            "tp": 191,
+            "fp": 133,
+            "fn": 32,
+            "precision": 0.5895,
+            "recall": 0.8565
+          },
+          "0.15": {
+            "tp": 188,
+            "fp": 104,
+            "fn": 35,
+            "precision": 0.6438,
+            "recall": 0.843
+          },
+          "0.20": {
+            "tp": 184,
+            "fp": 77,
+            "fn": 39,
+            "precision": 0.705,
+            "recall": 0.8251
+          },
+          "0.25": {
+            "tp": 181,
+            "fp": 62,
+            "fn": 42,
+            "precision": 0.7449,
+            "recall": 0.8117
+          },
+          "0.30": {
+            "tp": 178,
+            "fp": 44,
+            "fn": 45,
+            "precision": 0.8018,
+            "recall": 0.7982
+          },
+          "0.35": {
+            "tp": 176,
+            "fp": 39,
+            "fn": 47,
+            "precision": 0.8186,
+            "recall": 0.7892
+          },
+          "0.40": {
+            "tp": 172,
+            "fp": 29,
+            "fn": 51,
+            "precision": 0.8557,
+            "recall": 0.7713
+          },
+          "0.45": {
+            "tp": 165,
+            "fp": 21,
+            "fn": 58,
+            "precision": 0.8871,
+            "recall": 0.7399
+          },
+          "0.50": {
+            "tp": 161,
+            "fp": 20,
+            "fn": 62,
+            "precision": 0.8895,
+            "recall": 0.722
+          }
+        },
+        "patches": {
+          "0.10": {
+            "tp": 163,
+            "fp": 70,
+            "fn": 17,
+            "precision": 0.6996,
+            "recall": 0.9056
+          },
+          "0.15": {
+            "tp": 163,
+            "fp": 62,
+            "fn": 17,
+            "precision": 0.7244,
+            "recall": 0.9056
+          },
+          "0.20": {
+            "tp": 163,
+            "fp": 43,
+            "fn": 17,
+            "precision": 0.7913,
+            "recall": 0.9056
+          },
+          "0.25": {
+            "tp": 163,
+            "fp": 34,
+            "fn": 17,
+            "precision": 0.8274,
+            "recall": 0.9056
+          },
+          "0.30": {
+            "tp": 163,
+            "fp": 28,
+            "fn": 17,
+            "precision": 0.8534,
+            "recall": 0.9056
+          },
+          "0.35": {
+            "tp": 163,
+            "fp": 28,
+            "fn": 17,
+            "precision": 0.8534,
+            "recall": 0.9056
+          },
+          "0.40": {
+            "tp": 161,
+            "fp": 25,
+            "fn": 19,
+            "precision": 0.8656,
+            "recall": 0.8944
+          },
+          "0.45": {
+            "tp": 158,
+            "fp": 18,
+            "fn": 22,
+            "precision": 0.8977,
+            "recall": 0.8778
+          },
+          "0.50": {
+            "tp": 158,
+            "fp": 17,
+            "fn": 22,
+            "precision": 0.9029,
+            "recall": 0.8778
+          }
+        },
+        "pitted_surface": {
+          "0.10": {
+            "tp": 68,
+            "fp": 30,
+            "fn": 16,
+            "precision": 0.6939,
+            "recall": 0.8095
+          },
+          "0.15": {
+            "tp": 67,
+            "fp": 22,
+            "fn": 17,
+            "precision": 0.7528,
+            "recall": 0.7976
+          },
+          "0.20": {
+            "tp": 64,
+            "fp": 15,
+            "fn": 20,
+            "precision": 0.8101,
+            "recall": 0.7619
+          },
+          "0.25": {
+            "tp": 62,
+            "fp": 10,
+            "fn": 22,
+            "precision": 0.8611,
+            "recall": 0.7381
+          },
+          "0.30": {
+            "tp": 60,
+            "fp": 8,
+            "fn": 24,
+            "precision": 0.8824,
+            "recall": 0.7143
+          },
+          "0.35": {
+            "tp": 60,
+            "fp": 8,
+            "fn": 24,
+            "precision": 0.8824,
+            "recall": 0.7143
+          },
+          "0.40": {
+            "tp": 59,
+            "fp": 7,
+            "fn": 25,
+            "precision": 0.8939,
+            "recall": 0.7024
+          },
+          "0.45": {
+            "tp": 56,
+            "fp": 4,
+            "fn": 28,
+            "precision": 0.9333,
+            "recall": 0.6667
+          },
+          "0.50": {
+            "tp": 56,
+            "fp": 4,
+            "fn": 28,
+            "precision": 0.9333,
+            "recall": 0.6667
+          }
+        },
+        "rolled-in_scale": {
+          "0.10": {
+            "tp": 104,
+            "fp": 154,
+            "fn": 33,
+            "precision": 0.4031,
+            "recall": 0.7591
+          },
+          "0.15": {
+            "tp": 102,
+            "fp": 120,
+            "fn": 35,
+            "precision": 0.4595,
+            "recall": 0.7445
+          },
+          "0.20": {
+            "tp": 94,
+            "fp": 96,
+            "fn": 43,
+            "precision": 0.4947,
+            "recall": 0.6861
+          },
+          "0.25": {
+            "tp": 90,
+            "fp": 74,
+            "fn": 47,
+            "precision": 0.5488,
+            "recall": 0.6569
+          },
+          "0.30": {
+            "tp": 84,
+            "fp": 60,
+            "fn": 53,
+            "precision": 0.5833,
+            "recall": 0.6131
+          },
+          "0.35": {
+            "tp": 81,
+            "fp": 52,
+            "fn": 56,
+            "precision": 0.609,
+            "recall": 0.5912
+          },
+          "0.40": {
+            "tp": 71,
+            "fp": 43,
+            "fn": 66,
+            "precision": 0.6228,
+            "recall": 0.5182
+          },
+          "0.45": {
+            "tp": 58,
+            "fp": 34,
+            "fn": 79,
+            "precision": 0.6304,
+            "recall": 0.4234
+          },
+          "0.50": {
+            "tp": 54,
+            "fp": 31,
+            "fn": 83,
+            "precision": 0.6353,
+            "recall": 0.3942
+          }
+        },
+        "scratches": {
+          "0.10": {
+            "tp": 101,
+            "fp": 47,
+            "fn": 7,
+            "precision": 0.6824,
+            "recall": 0.9352
+          },
+          "0.15": {
+            "tp": 101,
+            "fp": 41,
+            "fn": 7,
+            "precision": 0.7113,
+            "recall": 0.9352
+          },
+          "0.20": {
+            "tp": 100,
+            "fp": 36,
+            "fn": 8,
+            "precision": 0.7353,
+            "recall": 0.9259
+          },
+          "0.25": {
+            "tp": 100,
+            "fp": 32,
+            "fn": 8,
+            "precision": 0.7576,
+            "recall": 0.9259
+          },
+          "0.30": {
+            "tp": 100,
+            "fp": 27,
+            "fn": 8,
+            "precision": 0.7874,
+            "recall": 0.9259
+          },
+          "0.35": {
+            "tp": 100,
+            "fp": 27,
+            "fn": 8,
+            "precision": 0.7874,
+            "recall": 0.9259
+          },
+          "0.40": {
+            "tp": 98,
+            "fp": 18,
+            "fn": 10,
+            "precision": 0.8448,
+            "recall": 0.9074
+          },
+          "0.45": {
+            "tp": 97,
+            "fp": 14,
+            "fn": 11,
+            "precision": 0.8739,
+            "recall": 0.8981
+          },
+          "0.50": {
+            "tp": 96,
+            "fp": 13,
+            "fn": 12,
+            "precision": 0.8807,
+            "recall": 0.8889
+          }
+        }
+      }
+    },
+    "crazing_image_level": {
+      "pt": {
+        "0.10": {
+          "crazing_images_flagged": 59,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.15": {
+          "crazing_images_flagged": 59,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.20": {
+          "crazing_images_flagged": 58,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.25": {
+          "crazing_images_flagged": 56,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.30": {
+          "crazing_images_flagged": 52,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.35": {
+          "crazing_images_flagged": 49,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.40": {
+          "crazing_images_flagged": 43,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.45": {
+          "crazing_images_flagged": 34,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.50": {
+          "crazing_images_flagged": 25,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        }
+      },
+      "fp32": {
+        "0.10": {
+          "crazing_images_flagged": 59,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.15": {
+          "crazing_images_flagged": 59,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.20": {
+          "crazing_images_flagged": 58,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.25": {
+          "crazing_images_flagged": 56,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.30": {
+          "crazing_images_flagged": 52,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.35": {
+          "crazing_images_flagged": 49,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.40": {
+          "crazing_images_flagged": 43,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.45": {
+          "crazing_images_flagged": 34,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.50": {
+          "crazing_images_flagged": 25,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        }
+      },
+      "int8": {
+        "0.10": {
+          "crazing_images_flagged": 60,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.15": {
+          "crazing_images_flagged": 59,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.20": {
+          "crazing_images_flagged": 57,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.25": {
+          "crazing_images_flagged": 51,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.30": {
+          "crazing_images_flagged": 48,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.35": {
+          "crazing_images_flagged": 46,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.40": {
+          "crazing_images_flagged": 37,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.45": {
+          "crazing_images_flagged": 24,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        },
+        "0.50": {
+          "crazing_images_flagged": 21,
+          "crazing_images": 60,
+          "other_images_with_crazing_det": 0,
+          "other_images": 300
+        }
+      }
+    }
+  },
+  "ultralytics_val": {
+    "pt_rect_true_batch32": {
+      "mAP50": 0.7693,
+      "mAP50_95": 0.4462,
+      "precision": 0.7139,
+      "recall": 0.7362,
+      "args": {
+        "batch": 32
+      },
+      "per_class": {
+        "crazing": {
+          "mAP50": 0.4062,
+          "mAP50_95": 0.1494
+        },
+        "inclusion": {
+          "mAP50": 0.8562,
+          "mAP50_95": 0.4577
+        },
+        "patches": {
+          "mAP50": 0.9249,
+          "mAP50_95": 0.6136
+        },
+        "pitted_surface": {
+          "mAP50": 0.8498,
+          "mAP50_95": 0.5754
+        },
+        "rolled-in_scale": {
+          "mAP50": 0.6524,
+          "mAP50_95": 0.3068
+        },
+        "scratches": {
+          "mAP50": 0.9266,
+          "mAP50_95": 0.5742
+        }
+      }
+    },
+    "pt_rect_false_batch1": {
+      "mAP50": 0.7442,
+      "mAP50_95": 0.4204,
+      "precision": 0.7025,
+      "recall": 0.7291,
+      "args": {
+        "batch": 1,
+        "rect": false
+      },
+      "per_class": {
+        "crazing": {
+          "mAP50": 0.3285,
+          "mAP50_95": 0.1205
+        },
+        "inclusion": {
+          "mAP50": 0.8242,
+          "mAP50_95": 0.4262
+        },
+        "patches": {
+          "mAP50": 0.8991,
+          "mAP50_95": 0.5758
+        },
+        "pitted_surface": {
+          "mAP50": 0.8472,
+          "mAP50_95": 0.5657
+        },
+        "rolled-in_scale": {
+          "mAP50": 0.6367,
+          "mAP50_95": 0.2795
+        },
+        "scratches": {
+          "mAP50": 0.9294,
+          "mAP50_95": 0.5548
+        }
+      }
+    },
+    "fp32": {
+      "mAP50": 0.7442,
+      "mAP50_95": 0.4204,
+      "precision": 0.7025,
+      "recall": 0.7291,
+      "args": {
+        "batch": 1
+      },
+      "per_class": {
+        "crazing": {
+          "mAP50": 0.3285,
+          "mAP50_95": 0.1205
+        },
+        "inclusion": {
+          "mAP50": 0.8242,
+          "mAP50_95": 0.4262
+        },
+        "patches": {
+          "mAP50": 0.8991,
+          "mAP50_95": 0.5758
+        },
+        "pitted_surface": {
+          "mAP50": 0.8472,
+          "mAP50_95": 0.5657
+        },
+        "rolled-in_scale": {
+          "mAP50": 0.6367,
+          "mAP50_95": 0.2795
+        },
+        "scratches": {
+          "mAP50": 0.9294,
+          "mAP50_95": 0.5548
+        }
+      }
+    },
+    "int8": {
+      "mAP50": 0.715,
+      "mAP50_95": 0.3722,
+      "precision": 0.6794,
+      "recall": 0.712,
+      "args": {
+        "batch": 1
+      },
+      "per_class": {
+        "crazing": {
+          "mAP50": 0.3384,
+          "mAP50_95": 0.1205
+        },
+        "inclusion": {
+          "mAP50": 0.8225,
+          "mAP50_95": 0.3999
+        },
+        "patches": {
+          "mAP50": 0.8608,
+          "mAP50_95": 0.4921
+        },
+        "pitted_surface": {
+          "mAP50": 0.7968,
+          "mAP50_95": 0.4954
+        },
+        "rolled-in_scale": {
+          "mAP50": 0.5722,
+          "mAP50_95": 0.2423
+        },
+        "scratches": {
+          "mAP50": 0.8995,
+          "mAP50_95": 0.4832
+        }
+      }
+    }
+  },
+  "severity_config": {
+    "min_confidence": 0.5,
+    "class_min_confidence": {
+      "crazing": 0.25,
+      "inclusion": 0.5,
+      "patches": 0.5,
+      "pitted_surface": 0.5,
+      "rolled-in_scale": 0.5,
+      "scratches": 0.5
+    },
+    "area_thresholds": {
+      "low_max": 0.02,
+      "medium_max": 0.05,
+      "high_max": 0.1
+    },
+    "count_escalation_threshold": 3,
+    "class_area_weight": {
+      "crazing": 1.0,
+      "inclusion": 1.0,
+      "patches": 1.0,
+      "pitted_surface": 1.0,
+      "rolled-in_scale": 1.0,
+      "scratches": 1.0
+    }
+  },
+  "severity_demo": [
+    {
+      "image": "scratches_202.jpg",
+      "fp32": {
+        "level": "Medium",
+        "defect_count": 2,
+        "max_area_ratio": 0.02649173007139325,
+        "escalated": false,
+        "reason": "largest-severity defect 'scratches' area ratio 0.0265 -> Medium",
+        "detections": [
+          {
+            "class_name": "scratches",
+            "confidence": 0.6991268396377563,
+            "bbox_xyxy": [
+              69.42340850830078,
+              126.34746551513672,
+              83.83705139160156,
+              199.86595153808594
+            ],
+            "area_ratio": 0.02649173007139325,
+            "weighted_area_ratio": 0.02649173007139325,
+            "level": "Medium"
+          },
+          {
+            "class_name": "scratches",
+            "confidence": 0.6530072689056396,
+            "bbox_xyxy": [
+              51.950645446777344,
+              39.13011932373047,
+              64.78852844238281,
+              116.98341369628906
+            ],
+            "area_ratio": 0.024986787099433423,
+            "weighted_area_ratio": 0.024986787099433423,
+            "level": "Medium"
+          }
+        ]
+      },
+      "int8": {
+        "level": "Medium",
+        "defect_count": 2,
+        "max_area_ratio": 0.026677598530237448,
+        "escalated": false,
+        "reason": "largest-severity defect 'scratches' area ratio 0.0267 -> Medium",
+        "detections": [
+          {
+            "class_name": "scratches",
+            "confidence": 0.6483141183853149,
+            "bbox_xyxy": [
+              68.36766815185547,
+              124.1619644165039,
+              82.51270294189453,
+              199.60214233398438
+            ],
+            "area_ratio": 0.026677598530237448,
+            "weighted_area_ratio": 0.026677598530237448,
+            "level": "Medium"
+          },
+          {
+            "class_name": "scratches",
+            "confidence": 0.6483141183853149,
+            "bbox_xyxy": [
+              52.650962829589844,
+              40.07759475708008,
+              65.22432708740234,
+              117.08946228027344
+            ],
+            "area_ratio": 0.024207456563587765,
+            "weighted_area_ratio": 0.024207456563587765,
+            "level": "Medium"
+          }
+        ]
+      },
+      "fp32_old_rule_level": "Medium"
+    },
+    {
+      "image": "crazing_90.jpg",
+      "fp32": {
+        "level": "Critical",
+        "defect_count": 1,
+        "max_area_ratio": 0.3375547996919686,
+        "escalated": false,
+        "reason": "largest-severity defect 'crazing' area ratio 0.3376 -> Critical",
+        "detections": [
+          {
+            "class_name": "crazing",
+            "confidence": 0.38783490657806396,
+            "bbox_xyxy": [
+              59.9578857421875,
+              14.930033683776855,
+              199.8417205810547,
+              111.45435333251953
+            ],
+            "area_ratio": 0.3375547996919686,
+            "weighted_area_ratio": 0.3375547996919686,
+            "level": "Critical"
+          }
+        ]
+      },
+      "int8": {
+        "level": "Critical",
+        "defect_count": 1,
+        "max_area_ratio": 0.3384720753627178,
+        "escalated": false,
+        "reason": "largest-severity defect 'crazing' area ratio 0.3385 -> Critical",
+        "detections": [
+          {
+            "class_name": "crazing",
+            "confidence": 0.2986173927783966,
+            "bbox_xyxy": [
+              62.08097839355469,
+              12.57336139678955,
+              198.81631469726562,
+              111.58860778808594
+            ],
+            "area_ratio": 0.3384720753627178,
+            "weighted_area_ratio": 0.3384720753627178,
+            "level": "Critical"
+          }
+        ]
+      },
+      "fp32_old_rule_level": null
+    },
+    {
+      "image": "crazing_141.jpg",
+      "fp32": {
+        "level": "Critical",
+        "defect_count": 2,
+        "max_area_ratio": 0.18858082121532788,
+        "escalated": false,
+        "reason": "largest-severity defect 'crazing' area ratio 0.1886 -> Critical",
+        "detections": [
+          {
+            "class_name": "crazing",
+            "confidence": 0.656525731086731,
+            "bbox_xyxy": [
+              1.6295242309570312,
+              3.6751413345336914,
+              52.989219665527344,
+              66.42554473876953
+            ],
+            "area_ratio": 0.08057104018094942,
+            "weighted_area_ratio": 0.08057104018094942,
+            "level": "High"
+          },
+          {
+            "class_name": "crazing",
+            "confidence": 0.4690316915512085,
+            "bbox_xyxy": [
+              68.8104019165039,
+              114.17789459228516,
+              196.69691467285156,
+              173.1616973876953
+            ],
+            "area_ratio": 0.18858082121532788,
+            "weighted_area_ratio": 0.18858082121532788,
+            "level": "Critical"
+          }
+        ]
+      },
+      "int8": {
+        "level": "Critical",
+        "defect_count": 2,
+        "max_area_ratio": 0.19139016242452198,
+        "escalated": false,
+        "reason": "largest-severity defect 'crazing' area ratio 0.1914 -> Critical",
+        "detections": [
+          {
+            "class_name": "crazing",
+            "confidence": 0.6208098530769348,
+            "bbox_xyxy": [
+              1.178750991821289,
+              4.322094917297363,
+              53.829715728759766,
+              66.403076171875
+            ],
+            "area_ratio": 0.08171558887173265,
+            "weighted_area_ratio": 0.08171558887173265,
+            "level": "High"
+          },
+          {
+            "class_name": "crazing",
+            "confidence": 0.3811300992965698,
+            "bbox_xyxy": [
+              69.54641723632812,
+              113.55319213867188,
+              196.06590270996094,
+              174.0625
+            ],
+            "area_ratio": 0.19139016242452198,
+            "weighted_area_ratio": 0.19139016242452198,
+            "level": "Critical"
+          }
+        ]
+      },
+      "fp32_old_rule_level": "High"
+    },
+    {
+      "image": "patches_218.jpg",
+      "fp32": {
+        "level": "Critical",
+        "defect_count": 3,
+        "max_area_ratio": 0.42724357567823606,
+        "escalated": false,
+        "reason": "largest-severity defect 'patches' area ratio 0.4272 -> Critical",
+        "detections": [
+          {
+            "class_name": "patches",
+            "confidence": 0.8935742378234863,
+            "bbox_xyxy": [
+              100.41435241699219,
+              0.44895172119140625,
+              187.46681213378906,
+              196.764404296875
+            ],
+            "area_ratio": 0.42724357567823606,
+            "weighted_area_ratio": 0.42724357567823606,
+            "level": "Critical"
+          },
+          {
+            "class_name": "patches",
+            "confidence": 0.850820004940033,
+            "bbox_xyxy": [
+              0.037811994552612305,
+              0.04687786102294922,
+              39.99320983886719,
+              45.51139831542969
+            ],
+            "area_ratio": 0.04541382506391997,
+            "weighted_area_ratio": 0.04541382506391997,
+            "level": "Medium"
+          },
+          {
+            "class_name": "patches",
+            "confidence": 0.7967077493667603,
+            "bbox_xyxy": [
+              0.07645606994628906,
+              79.61743927001953,
+              80.5372543334961,
+              199.96932983398438
+            ],
+            "area_ratio": 0.24209022968259997,
+            "weighted_area_ratio": 0.24209022968259997,
+            "level": "Critical"
+          }
+        ]
+      },
+      "int8": {
+        "level": "Critical",
+        "defect_count": 3,
+        "max_area_ratio": 0.42241857232260516,
+        "escalated": false,
+        "reason": "largest-severity defect 'patches' area ratio 0.2254 -> Critical",
+        "detections": [
+          {
+            "class_name": "patches",
+            "confidence": 0.6483141183853149,
+            "bbox_xyxy": [
+              1.178750991821289,
+              0.0,
+              39.6846809387207,
+              45.97136306762695
+            ],
+            "area_ratio": 0.04425425214613806,
+            "weighted_area_ratio": 0.04425425214613806,
+            "level": "Medium"
+          },
+          {
+            "class_name": "patches",
+            "confidence": 0.6208098530769348,
+            "bbox_xyxy": [
+              0.0,
+              82.9056167602539,
+              77.0118637084961,
+              200.0
+            ],
+            "area_ratio": 0.22544141707724338,
+            "weighted_area_ratio": 0.22544141707724338,
+            "level": "Critical"
+          },
+          {
+            "class_name": "patches",
+            "confidence": 0.5029345750808716,
+            "bbox_xyxy": [
+              102.55149841308594,
+              0.0,
+              189.7792205810547,
+              193.70840454101562
+            ],
+            "area_ratio": 0.42241857232260516,
+            "weighted_area_ratio": 0.42241857232260516,
+            "level": "Critical"
+          }
+        ]
+      },
+      "fp32_old_rule_level": "Critical"
+    },
+    {
+      "image": "patches_136.jpg",
+      "fp32": {
+        "level": "Critical",
+        "defect_count": 1,
+        "max_area_ratio": 0.28775902942271203,
+        "escalated": false,
+        "reason": "largest-severity defect 'patches' area ratio 0.2878 -> Critical",
+        "detections": [
+          {
+            "class_name": "patches",
+            "confidence": 0.8583377003669739,
+            "bbox_xyxy": [
+              73.12442779541016,
+              0.0,
+              130.98220825195312,
+              198.94232177734375
+            ],
+            "area_ratio": 0.28775902942271203,
+            "weighted_area_ratio": 0.28775902942271203,
+            "level": "Critical"
+          }
+        ]
+      },
+      "int8": {
+        "level": "Critical",
+        "defect_count": 1,
+        "max_area_ratio": 0.27183977904694623,
+        "escalated": false,
+        "reason": "largest-severity defect 'patches' area ratio 0.2718 -> Critical",
+        "detections": [
+          {
+            "class_name": "patches",
+            "confidence": 0.6483141183853149,
+            "bbox_xyxy": [
+              74.26142883300781,
+              0.0,
+              130.05572509765625,
+              194.88714599609375
+            ],
+            "area_ratio": 0.27183977904694623,
+            "weighted_area_ratio": 0.27183977904694623,
+            "level": "Critical"
+          }
+        ]
+      },
+      "fp32_old_rule_level": "Critical"
+    },
+    {
+      "image": "inclusion_82.jpg",
+      "fp32": {
+        "level": "High",
+        "defect_count": 2,
+        "max_area_ratio": 0.07290074027274422,
+        "escalated": false,
+        "reason": "largest-severity defect 'inclusion' area ratio 0.0729 -> High",
+        "detections": [
+          {
+            "class_name": "inclusion",
+            "confidence": 0.8558751940727234,
+            "bbox_xyxy": [
+              34.19649124145508,
+              138.34677124023438,
+              65.83111572265625,
+              200.0
+            ],
+            "area_ratio": 0.04875941849671944,
+            "weighted_area_ratio": 0.04875941849671944,
+            "level": "Medium"
+          },
+          {
+            "class_name": "inclusion",
+            "confidence": 0.7189584970474243,
+            "bbox_xyxy": [
+              57.17119216918945,
+              0.048885345458984375,
+              87.82662963867188,
+              95.17163848876953
+            ],
+            "area_ratio": 0.07290074027274422,
+            "weighted_area_ratio": 0.07290074027274422,
+            "level": "High"
+          }
+        ]
+      },
+      "int8": {
+        "level": "High",
+        "defect_count": 2,
+        "max_area_ratio": 0.06797541031777218,
+        "escalated": false,
+        "reason": "largest-severity defect 'inclusion' area ratio 0.0680 -> High",
+        "detections": [
+          {
+            "class_name": "inclusion",
+            "confidence": 0.6483141183853149,
+            "bbox_xyxy": [
+              34.183834075927734,
+              138.69993591308594,
+              64.83140563964844,
+              197.6375732421875
+            ],
+            "area_ratio": 0.04515738644600642,
+            "weighted_area_ratio": 0.04515738644600642,
+            "level": "Medium"
+          },
+          {
+            "class_name": "inclusion",
+            "confidence": 0.6483141183853149,
+            "bbox_xyxy": [
+              56.187217712402344,
+              0.0,
+              85.26313018798828,
+              93.51439666748047
+            ],
+            "area_ratio": 0.06797541031777218,
+            "weighted_area_ratio": 0.06797541031777218,
+            "level": "High"
+          }
+        ]
+      },
+      "fp32_old_rule_level": "High"
+    },
+    {
+      "image": "inclusion_135.jpg",
+      "fp32": {
+        "level": "Critical",
+        "defect_count": 1,
+        "max_area_ratio": 0.14910517654184804,
+        "escalated": false,
+        "reason": "largest-severity defect 'inclusion' area ratio 0.1491 -> Critical",
+        "detections": [
+          {
+            "class_name": "inclusion",
+            "confidence": 0.7192190885543823,
+            "bbox_xyxy": [
+              40.68239974975586,
+              0.0,
+              70.5384750366211,
+              199.76527404785156
+            ],
+            "area_ratio": 0.14910517654184804,
+            "weighted_area_ratio": 0.14910517654184804,
+            "level": "Critical"
+          }
+        ]
+      },
+      "int8": {
+        "level": "Critical",
+        "defect_count": 1,
+        "max_area_ratio": 0.14366228959715954,
+        "escalated": false,
+        "reason": "largest-severity defect 'inclusion' area ratio 0.1437 -> Critical",
+        "detections": [
+          {
+            "class_name": "inclusion",
+            "confidence": 0.6483141183853149,
+            "bbox_xyxy": [
+              41.256351470947266,
+              0.0,
+              70.33226013183594,
+              197.63755798339844
+            ],
+            "area_ratio": 0.14366228959715954,
+            "weighted_area_ratio": 0.14366228959715954,
+            "level": "Critical"
+          }
+        ]
+      },
+      "fp32_old_rule_level": "Critical"
+    },
+    {
+      "image": "crazing_61.jpg",
+      "fp32": {
+        "level": "Critical",
+        "defect_count": 1,
+        "max_area_ratio": 0.18901476503564482,
+        "escalated": false,
+        "reason": "largest-severity defect 'crazing' area ratio 0.1890 -> Critical",
+        "detections": [
+          {
+            "class_name": "crazing",
+            "confidence": 0.2520424425601959,
+            "bbox_xyxy": [
+              1.4449501037597656,
+              24.40612030029297,
+              119.13776397705078,
+              88.64615631103516
+            ],
+            "area_ratio": 0.18901476503564482,
+            "weighted_area_ratio": 0.18901476503564482,
+            "level": "Critical"
+          }
+        ]
+      },
+      "int8": {
+        "level": "Critical",
+        "defect_count": 1,
+        "max_area_ratio": 0.1890435137816664,
+        "escalated": false,
+        "reason": "largest-severity defect 'crazing' area ratio 0.1890 -> Critical",
+        "detections": [
+          {
+            "class_name": "crazing",
+            "confidence": 0.32612162828445435,
+            "bbox_xyxy": [
+              1.178750991821289,
+              24.753812789916992,
+              122.98321533203125,
+              86.83479309082031
+            ],
+            "area_ratio": 0.1890435137816664,
+            "weighted_area_ratio": 0.1890435137816664,
+            "level": "Critical"
+          }
+        ]
+      },
+      "fp32_old_rule_level": null
+    },
+    {
+      "image": "scratches_271.jpg",
+      "fp32": {
+        "level": "Critical",
+        "defect_count": 4,
+        "max_area_ratio": 0.2108804042179836,
+        "escalated": false,
+        "reason": "largest-severity defect 'scratches' area ratio 0.1494 -> Critical",
+        "detections": [
+          {
+            "class_name": "scratches",
+            "confidence": 0.756865382194519,
+            "bbox_xyxy": [
+              0.0,
+              35.112815856933594,
+              200.0,
+              64.99076843261719
+            ],
+            "area_ratio": 0.14938976287841796,
+            "weighted_area_ratio": 0.14938976287841796,
+            "level": "Critical"
+          },
+          {
+            "class_name": "scratches",
+            "confidence": 0.5571252703666687,
+            "bbox_xyxy": [
+              0.0,
+              82.01878356933594,
+              187.08583068847656,
+              96.7839126586914
+            ],
+            "area_ratio": 0.06905866102261643,
+            "weighted_area_ratio": 0.06905866102261643,
+            "level": "High"
+          },
+          {
+            "class_name": "scratches",
+            "confidence": 0.5332232713699341,
+            "bbox_xyxy": [
+              10.6707763671875,
+              189.33609008789062,
+              200.0,
+              200.0
+            ],
+            "area_ratio": 0.05047474461374804,
+            "weighted_area_ratio": 0.05047474461374804,
+            "level": "High"
+          },
+          {
+            "class_name": "scratches",
+            "confidence": 0.511395275592804,
+            "bbox_xyxy": [
+              0.0,
+              80.8150863647461,
+              189.7965087890625,
+              125.25856018066406
+            ],
+            "area_ratio": 0.2108804042179836,
+            "weighted_area_ratio": 0.2108804042179836,
+            "level": "Critical"
+          }
+        ]
+      },
+      "int8": {
+        "level": "Critical",
+        "defect_count": 4,
+        "max_area_ratio": 0.20548545853425457,
+        "escalated": false,
+        "reason": "largest-severity defect 'scratches' area ratio 0.1831 -> Critical",
+        "detections": [
+          {
+            "class_name": "scratches",
+            "confidence": 0.6483141183853149,
+            "bbox_xyxy": [
+              0.0,
+              30.254657745361328,
+              190.17213439941406,
+              68.76058197021484
+            ],
+            "area_ratio": 0.18306884492156242,
+            "weighted_area_ratio": 0.18306884492156242,
+            "level": "Critical"
+          },
+          {
+            "class_name": "scratches",
+            "confidence": 0.5304387807846069,
+            "bbox_xyxy": [
+              32.21924591064453,
+              189.38629150390625,
+              198.8163299560547,
+              200.0
+            ],
+            "area_ratio": 0.04420532215893036,
+            "weighted_area_ratio": 0.04420532215893036,
+            "level": "Medium"
+          },
+          {
+            "class_name": "scratches",
+            "confidence": 0.5304387807846069,
+            "bbox_xyxy": [
+              0.0,
+              82.11978912353516,
+              190.17213439941406,
+              125.34072875976562
+            ],
+            "area_ratio": 0.20548545853425457,
+            "weighted_area_ratio": 0.20548545853425457,
+            "level": "Critical"
+          },
+          {
+            "class_name": "scratches",
+            "confidence": 0.5029345750808716,
+            "bbox_xyxy": [
+              0.0,
+              80.15519714355469,
+              191.74380493164062,
+              95.87190246582031
+            ],
+            "area_ratio": 0.07533952198701445,
+            "weighted_area_ratio": 0.07533952198701445,
+            "level": "High"
+          }
+        ]
+      },
+      "fp32_old_rule_level": "Critical"
+    },
+    {
+      "image": "rolled-in_scale_275.jpg",
+      "fp32": {
+        "level": "Critical",
+        "defect_count": 2,
+        "max_area_ratio": 0.10927496696483285,
+        "escalated": false,
+        "reason": "largest-severity defect 'rolled-in_scale' area ratio 0.1093 -> Critical",
+        "detections": [
+          {
+            "class_name": "rolled-in_scale",
+            "confidence": 0.8143357038497925,
+            "bbox_xyxy": [
+              59.16238784790039,
+              139.7233123779297,
+              109.41014862060547,
+              199.97589111328125
+            ],
+            "area_ratio": 0.07568892905581306,
+            "weighted_area_ratio": 0.07568892905581306,
+            "level": "High"
+          },
+          {
+            "class_name": "rolled-in_scale",
+            "confidence": 0.6516872644424438,
+            "bbox_xyxy": [
+              151.92469787597656,
+              91.25370025634766,
+              200.0,
+              182.1735382080078
+            ],
+            "area_ratio": 0.10927496696483285,
+            "weighted_area_ratio": 0.10927496696483285,
+            "level": "Critical"
+          }
+        ]
+      },
+      "int8": {
+        "level": "Critical",
+        "defect_count": 2,
+        "max_area_ratio": 0.10735881088752648,
+        "escalated": false,
+        "reason": "largest-severity defect 'rolled-in_scale' area ratio 0.1074 -> Critical",
+        "detections": [
+          {
+            "class_name": "rolled-in_scale",
+            "confidence": 0.6483141183853149,
+            "bbox_xyxy": [
+              57.75889205932617,
+              138.69993591308594,
+              108.83818817138672,
+              197.6375732421875
+            ],
+            "area_ratio": 0.0752623257319603,
+            "weighted_area_ratio": 0.0752623257319603,
+            "level": "High"
+          },
+          {
+            "class_name": "rolled-in_scale",
+            "confidence": 0.6483141183853149,
+            "bbox_xyxy": [
+              150.48745727539062,
+              92.72855377197266,
+              198.42340087890625,
+              182.31378173828125
+            ],
+            "area_ratio": 0.10735881088752648,
+            "weighted_area_ratio": 0.10735881088752648,
+            "level": "Critical"
+          }
+        ]
+      },
+      "fp32_old_rule_level": "Critical"
+    }
+  ]
+}

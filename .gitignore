@@ -45,6 +45,7 @@ phase1-vision/data/dataset/labels/train/*
 !phase1-vision/data/dataset/labels/train/.gitkeep
 phase1-vision/data/dataset/labels/val/*
 !phase1-vision/data/dataset/labels/val/.gitkeep
+phase1-vision/data/dataset/labels/*.cache
 
 # Ignore general dataset archives
 *.zip
