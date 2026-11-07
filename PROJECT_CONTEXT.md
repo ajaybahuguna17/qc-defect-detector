@@ -16,7 +16,7 @@
 Build a low-latency, **100% on-device** quality-control assistant for factory-floor operators. It detects surface defects from a camera stream and gives operator guidance. No inference or telemetry goes to the cloud.
 
 ### Non-Negotiable Technical Constraints
-1. **Zero cloud / zero network APIs at runtime.** Vision inference, LLM generation and logging all run on the device. No OpenAI, Anthropic, HF Inference API, etc. (The only network use is the one-time dataset download during training.)
+1. **Zero cloud / zero network APIs at runtime.** Vision inference, LLM generation and logging all run on the device. No third-party cloud AI APIs (e.g. OpenAI, HF Inference API). (The only network use is the one-time dataset download during training.)
 2. **Two separate pipelines:**
    - **Pipeline A (vision), all TensorFlow Lite (LiteRT), all deterministic after the models:**
      detector **YOLOv8n** (320x320, TFLite FP32 or INT8) + image classifier **YOLOv8n-cls**
