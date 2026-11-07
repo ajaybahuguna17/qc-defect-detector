@@ -1,0 +1,19 @@
+# Phase 1 (vision) - Colab training + TFLite export environment
+#
+# Target: Google Colab GPU runtime, Linux x86_64, Python 3.12.
+# Ultralytics' LiteRT (TFLite) export only runs on Linux x86_64 or macOS, NOT on Windows.
+#
+# torch / torchvision / numpy / pillow / opencv / matplotlib / pyyaml are NOT pinned here on purpose:
+# Colab ships CUDA-matched builds and re-installing them breaks the GPU runtime. litert-torch 0.10.0
+# needs torch>=2.4,<2.15, which every current Colab image satisfies. The notebook writes the exact
+# versions it ran with (torch, CUDA, numpy, ...) into results/phase1_results.json.
+#
+# Install:  pip install -r phase1-vision/requirements.txt
+
+ultralytics==8.4.198          # training, validation, LiteRT export (format="litert")
+litert-torch==0.10.0          # torch -> .tflite converter used by Ultralytics' litert export
+ai-edge-litert==2.3.0         # TFLite/LiteRT interpreter (Python) for the sanity checks
+ai-edge-quantizer==0.10.1     # INT8 post-training quantisation used by the litert export
+kagglehub==1.0.3              # fallback NEU-DET download if the Google Drive mirror fails
+
+# Local unit tests (severity rule + decoder) only need: Python >= 3.10, numpy (decoder tests).

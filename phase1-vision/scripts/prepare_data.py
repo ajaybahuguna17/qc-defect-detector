@@ -5,11 +5,17 @@ Part of the Real-Time Industrial Defect Detection & Quality-Control Assistant pr
 
 Automates the entire data acquisition, annotation conversion, and directory setup:
 1. Automatically downloads the benchmark NEU Surface Defect Database (NEU-DET)
-   (or structures existing Kaggle/VOC defect archives, with offline synthetic fallback).
+   (falls back to kagglehub; never to synthetic data unless --synthetic is given).
 2. Parses PASCAL VOC XML annotations and converts them to normalized YOLO format.
-3. Performs stratified/reproducible train/val splitting (default 80/20).
-4. Auto-generates the Ultralytics YOLO configuration file (data.yaml).
-5. Runs dataset integrity checks and outputs class distribution diagnostics.
+3. Performs a stratified, seeded train/val split (default 80/20, seed 42).
+   The output images/ and labels/ train+val dirs are CLEARED first, and the script
+   fails if any image stem ends up in both train and val.
+4. Writes data.yaml WITHOUT an absolute path (Ultralytics resolves it from the
+   yaml's own folder), so the file is portable between Windows, Colab and Linux.
+5. Runs dataset integrity checks and prints final counts / class distribution.
+
+The synthetic generator is only used when --synthetic is passed explicitly. If the
+real NEU-DET cannot be found or downloaded the script raises.
 
 Runs 100% programmatically with zero mandatory third-party dependencies (pure standard library).
 """
@@ -70,6 +76,8 @@ CLASS_ALIASES: Dict[str, str] = {
     "scratch": "scratches",
     "sc": "scratches",
 }
+
+PHASE1_DIR = Path(__file__).resolve().parents[1]
 
 # Primary official direct download URL for NEU-DET (Google Drive usercontent direct link)
 PRIMARY_NEU_DET_URL = (
@@ -390,7 +398,7 @@ def create_synthetic_defect_benchmark(
     return True
 
 
-def ensure_raw_dataset(raw_dir: Path, force_download: bool = False, allow_synthetic: bool = True) -> Tuple[Path, Path]:
+def ensure_raw_dataset(raw_dir: Path, force_download: bool = False, allow_synthetic: bool = False) -> Tuple[Path, Path]:
     """
     Ensures that raw defect images and VOC XML annotations exist.
     If not present or force_download is True, automatically downloads and extracts NEU-DET.
@@ -477,10 +485,10 @@ def ensure_raw_dataset(raw_dir: Path, force_download: bool = False, allow_synthe
                     shutil.copy2(xml, raw_annotations / xml.name)
             if any(raw_images.glob("*.*")):
                 return raw_images, raw_annotations
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[WARN] kagglehub download not available/failed: {e}")
 
-    # Step 4: Synthetic benchmark generation fallback (ensures guaranteed offline success)
+    # Step 4: Synthetic data ONLY when explicitly requested (--synthetic). Never a silent fallback.
     if allow_synthetic:
         create_synthetic_defect_benchmark(raw_images, raw_annotations, num_samples_per_class=20)
         return raw_images, raw_annotations
@@ -617,14 +625,67 @@ def parse_voc_xml(
 # Train / Validation Splitter & YOLO Dataset Builder
 # ==============================================================================
 
-def write_data_yaml(yaml_path: Path, dataset_dir: Path, classes: List[str]):
-    """Generates standard Ultralytics YOLO data.yaml configuration."""
+def clear_dir_keep_gitkeep(d: Path) -> None:
+    """Delete every file/subdir in d (except .gitkeep), creating d if needed."""
+    d.mkdir(parents=True, exist_ok=True)
+    for item in d.iterdir():
+        if item.name == ".gitkeep":
+            continue
+        if item.is_dir():
+            shutil.rmtree(item)
+        else:
+            item.unlink()
+
+
+def assert_no_overlap(train_pairs: List[Tuple[Path, Path]], val_pairs: List[Tuple[Path, Path]]) -> None:
+    """Fail loudly if any image (by stem, case-insensitive) is in both splits."""
+    train_stems = {img.stem.lower() for img, _ in train_pairs}
+    val_stems = {img.stem.lower() for img, _ in val_pairs}
+    dup_train = len(train_stems) != len(train_pairs)
+    dup_val = len(val_stems) != len(val_pairs)
+    overlap = sorted(train_stems & val_stems)
+    if overlap or dup_train or dup_val:
+        raise RuntimeError(
+            f"Train/val split is not clean: {len(overlap)} stems in both splits "
+            f"(e.g. {overlap[:10]}), duplicate stems within train={dup_train}, within val={dup_val}."
+        )
+
+
+def verify_dataset_on_disk(dataset_dir: Path) -> Dict[str, int]:
+    """Re-read the written dataset and fail if splits overlap or images/labels mismatch."""
+    exts = {".jpg", ".jpeg", ".png", ".bmp"}
+    out: Dict[str, int] = {}
+    stems = {}
+    for split in ("train", "val"):
+        imgs = [p for p in (dataset_dir / "images" / split).iterdir() if p.suffix.lower() in exts]
+        lbls = list((dataset_dir / "labels" / split).glob("*.txt"))
+        img_stems = {p.stem.lower() for p in imgs}
+        lbl_stems = {p.stem.lower() for p in lbls}
+        if img_stems != lbl_stems:
+            raise RuntimeError(
+                f"{split}: image/label mismatch, images without labels={sorted(img_stems - lbl_stems)[:10]}, "
+                f"labels without images={sorted(lbl_stems - img_stems)[:10]}"
+            )
+        stems[split] = img_stems
+        out[f"{split}_images"] = len(imgs)
+        out[f"{split}_labels"] = len(lbls)
+    overlap = sorted(stems["train"] & stems["val"])
+    if overlap:
+        raise RuntimeError(f"{len(overlap)} images are in BOTH train and val on disk, e.g. {overlap[:10]}")
+    return out
+
+
+def write_data_yaml(yaml_path: Path, classes: List[str]):
+    """Generates a portable Ultralytics data.yaml (no absolute paths).
+
+    `path` is intentionally omitted: Ultralytics then uses the folder that contains
+    this yaml as the dataset root. Always pass the yaml path itself to YOLO.
+    """
     names_yaml = "\n".join([f"  {idx}: {cls_name}" for idx, cls_name in enumerate(classes)])
     content = f"""# Ultralytics YOLO Industrial Defect Detection Dataset
 # Standard Benchmark: NEU Surface Defect Database (NEU-DET)
 # Auto-generated by prepare_data.py
-
-path: {dataset_dir.as_posix()}
+# No `path:` key on purpose -> dataset root = the folder containing this file.
 train: images/train
 val: images/val
 test: # optional
@@ -648,7 +709,7 @@ def prepare_dataset(
     split_ratio: float = 0.8,
     seed: int = 42,
     force_download: bool = False,
-    allow_synthetic: bool = True,
+    allow_synthetic: bool = False,
     sample_limit: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
@@ -663,7 +724,7 @@ def prepare_dataset(
     if classes is None:
         classes = DEFAULT_CLASSES
 
-    random.seed(seed)
+    rng = random.Random(seed)  # private, seeded RNG -> identical split on every machine
     class_to_id = {cls_name: i for i, cls_name in enumerate(classes)}
 
     # 1. Acquire raw data
@@ -679,8 +740,11 @@ def prepare_dataset(
     labels_train = dataset_dir / "labels" / "train"
     labels_val = dataset_dir / "labels" / "val"
 
+    # Clear previous outputs so stale files from older runs can never leak across splits.
     for d in [images_train, images_val, labels_train, labels_val]:
-        d.mkdir(parents=True, exist_ok=True)
+        clear_dir_keep_gitkeep(d)
+    for cache in (dataset_dir / "labels").glob("*.cache"):  # Ultralytics label caches
+        cache.unlink()
 
     # 3. Match raw images with XML annotations
     supported_exts = ("*.jpg", "*.jpeg", "*.png", "*.bmp")
@@ -733,20 +797,22 @@ def prepare_dataset(
     val_pairs: List[Tuple[Path, Path]] = []
 
     for c, pairs in class_groups.items():
-        random.shuffle(pairs)
+        rng.shuffle(pairs)
         s_idx = int(len(pairs) * split_ratio)
         train_pairs.extend(pairs[:s_idx])
         val_pairs.extend(pairs[s_idx:])
 
     if unclassified:
-        random.shuffle(unclassified)
+        rng.shuffle(unclassified)
         s_idx = int(len(unclassified) * split_ratio)
         train_pairs.extend(unclassified[:s_idx])
         val_pairs.extend(unclassified[s_idx:])
 
     # Shuffle final train and val sets
-    random.shuffle(train_pairs)
-    random.shuffle(val_pairs)
+    rng.shuffle(train_pairs)
+    rng.shuffle(val_pairs)
+
+    assert_no_overlap(train_pairs, val_pairs)
 
     print(f"[INFO] Partitioned into: {len(train_pairs)} Train images | {len(val_pairs)} Validation images")
 
@@ -787,7 +853,10 @@ def prepare_dataset(
 
     # 6. Auto-generate data.yaml
     yaml_path = dataset_dir / "data.yaml"
-    write_data_yaml(yaml_path, dataset_dir, classes)
+    write_data_yaml(yaml_path, classes)
+
+    # 6b. Verify what is actually on disk (catches anything the in-memory check could miss)
+    disk = verify_dataset_on_disk(dataset_dir)
 
     # 7. Print Terminal Diagnostic Report
     print("\n" + "=" * 62)
@@ -803,12 +872,16 @@ def prepare_dataset(
     print(f"{'TOTAL DEFECT BOXES':<20} | {train_total_boxes:<12} | {val_total_boxes:<12} | {train_total_boxes + val_total_boxes:<8}")
     print(f"{'TOTAL IMAGES':<20} | {len(train_pairs):<12} | {len(val_pairs):<12} | {len(train_pairs) + len(val_pairs):<8}")
     print("=" * 62)
+    print(f"[CHECK] On disk: train {disk['train_images']} images / {disk['train_labels']} labels, "
+          f"val {disk['val_images']} images / {disk['val_labels']} labels, train/val overlap = 0")
+    print(f"[CHECK] Split seed = {seed}")
     print(f"[SUCCESS] YOLO configuration generated at: {yaml_path}")
     print(f"[SUCCESS] Dataset root ready for training at: {dataset_dir.resolve()}")
     print("=" * 62 + "\n")
 
     return {
         "status": "success",
+        "seed": seed,
         "dataset_dir": str(dataset_dir.resolve()),
         "data_yaml": str(yaml_path.resolve()),
         "classes": classes,
@@ -832,13 +905,13 @@ def main():
     parser.add_argument(
         "--raw-dir",
         type=str,
-        default="phase1-vision/data/raw",
+        default=str(PHASE1_DIR / "data" / "raw"),
         help="Directory to store or locate raw images and VOC annotations"
     )
     parser.add_argument(
         "--dataset-dir",
         type=str,
-        default="phase1-vision/data/dataset",
+        default=str(PHASE1_DIR / "data" / "dataset"),
         help="Target directory for processed YOLO dataset"
     )
     parser.add_argument(
@@ -861,7 +934,7 @@ def main():
     parser.add_argument(
         "--synthetic",
         action="store_true",
-        help="Generate synthetic benchmark dataset (for offline air-gapped execution)"
+        help="Generate a SYNTHETIC dataset (pipeline smoke test only; never use for training results)"
     )
     parser.add_argument(
         "--sample-limit",
@@ -899,7 +972,7 @@ def main():
         split_ratio=args.split_ratio,
         seed=args.seed,
         force_download=args.download,
-        allow_synthetic=True,
+        allow_synthetic=args.synthetic,
         sample_limit=args.sample_limit,
     )
 
