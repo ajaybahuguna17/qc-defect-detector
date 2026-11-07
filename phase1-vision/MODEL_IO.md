@@ -1,10 +1,39 @@
 # Phase 1 TFLite model: input / output contract
 
-> **Phase 1.1 (2026-11-07):** the detector is being retrained on the new 70/15/15 split and an
-> image classifier is added (section *Image classifier* at the end). The detector I/O contract
-> below is not expected to change (same export script, same 320 input), but the new files will
-> have new hashes and new accuracy numbers (TEST split). Until the Phase 1.1 Colab run is done,
-> everything in the detector sections refers to the Phase 1 run `neu_yolov8n_320_e100_s42`.
+> **Phase 1.1 (run `p11_split701515_det320_cls224_s42`, 2026-11-07):** the detector was retrained
+> on the new 70/15/15 split and an image classifier was added (section *Image classifier* at the
+> end). The detector I/O contract below is unchanged (same export script, same 320 input, output
+> `[1, 10, 2100]`). Phase 1.1 detector files: FP32 12,693,227 bytes, INT8 3,441,424 bytes; TEST
+> (270 images, 320 px) mAP50 / mAP50-95: `.pt` 0.741 / 0.413 = FP32 0.741 / 0.413, INT8 0.693 / 0.340.
+> Source: `results/phase1_1/phase1_1_results.json`. Models on Drive under
+> `MyDrive/qc-defect-detector/phase1/p11_split701515_det320_cls224_s42/models/`. The SHA-256 table
+> and the val-split tables below are still those of the Phase 1 run `neu_yolov8n_320_e100_s42`.
+
+## Phase 1.1 model files (USE THESE IN PHASE 3)
+
+**The Android app (Phase 3) must use the Phase 1.1 models below**, not the Phase 1 files of run
+`neu_yolov8n_320_e100_s42` listed further down. Locations (not in git):
+- Google Drive: `MyDrive/qc-defect-detector/phase1/p11_split701515_det320_cls224_s42/models/{detector,classifier}/`
+- local: `phase1-vision/models/exported/phase1_1/{detector,classifier}/` (gitignored)
+
+SHA-256 and size of every file in `models/exported/phase1_1/` (computed locally on 2026-11-08; sizes
+and the classifier FP32 hash match `results/phase1_1/phase1_1_results.json`, and both `model_io.json`
+files are identical to the copies in that results file). Check these after copying the models into the app:
+
+| File | Bytes | SHA-256 |
+|---|---|---|
+| `detector/best_p11_split701515_det320_cls224_s42_detector.pt` | 6,475,050 | `4bdd364d2cc1e301fc4e5db918a21f2100840e901d1260f21dd7a0c1fb877c56` |
+| `detector/defect_yolov8n_320_fp32.tflite` | 12,693,227 | `b453d1b99fe83a340c159ca44e99a9511cb3ee5b2dc2f813575aa2732f9262e0` |
+| `detector/defect_yolov8n_320_int8.tflite` | 3,441,424 | `ceed1ecd20c6d8cb715b39cf7f2bc1cff238f4aac3f4fca6fb6278c547fb9f2f` |
+| `detector/labels.txt` | 67 | `950255ac9fb196b614f869f1151f8e132a79d72b7711a4b3f18026ff0ba77298` |
+| `detector/model_io.json` | 1,450 | `cbb97612a160b1c3dde7f1d3a1d40f32048805daeb09e296aac1e15136562710` |
+| `classifier/best_p11_split701515_det320_cls224_s42_classifier.pt` | 2,976,584 | `b895725b140feafa0f111aa80f4ef04d67e01274bd1d1e0113c6b50b7ec66e9e` |
+| `classifier/defect_cls_yolov8n_224_fp32.tflite` | 5,815,905 | `34889a816f4319bc693e38fd9faad0560ce2ff07102b543c446704128b51831d` |
+| `classifier/labels.txt` | 67 | `950255ac9fb196b614f869f1151f8e132a79d72b7711a4b3f18026ff0ba77298` |
+| `classifier/model_io.json` | 1,984 | `d6fea14410ad4e572e0d57a6414b2415b4246e3b7f783bc426b7b346ec4a8559` |
+
+There is no `classifier/defect_cls_yolov8n_224_int8.tflite`: the classifier INT8 export was skipped
+(see *Image classifier* below). On the phone, the "INT8 pipeline" = detector INT8 + classifier FP32.
 
 The contract between the vision model and the Android app. The reference implementation
 is `phase1-vision/scripts/tflite_utils.py` (`letterbox`, `to_input_tensor`,
@@ -156,67 +185,78 @@ on-device benchmarks).
 
 # Image classifier (Phase 1.1): input / output contract
 
-> **Classifier INT8: SKIPPED.** In the Phase 1.1 Colab run (2026-11-07) the INT8 export hung for
-> more than 45 min (49 min with no output and no file activity) in the ai-edge-quantizer
-> calibration step and was interrupted. There is **no INT8 classifier**. The resumed run records
-> `"int8": {"status": "skipped", "reason": "hung >45 min in ai-edge-quantizer calibration on Colab,
-> 2026-11-07", "timestamp": ...}` in `model_io.json`. The **"INT8 pipeline" is detector INT8 +
-> classifier FP32** (about 6 MB extra for the FP32 classifier, size TODO). Exports now run in a child
-> process with a timeout (`scripts/export_child.py`, default 15 min); an INT8 classifier failure
-> is only tolerated with `--allow-skip-int8`, never silently.
+> **Status: confirmed (FP32).** Values below come from the Phase 1.1 Colab run
+> `p11_split701515_det320_cls224_s42` (Tesla T4, Ultralytics 8.4.198, resumed from the Drive backup
+> `p11_backup`), file `results/phase1_1/phase1_1_results.json` -> `model_io.classifier` and `test`.
+> Models on Google Drive under
+> `MyDrive/qc-defect-detector/phase1/p11_split701515_det320_cls224_s42/models/classifier/` and locally in
+> `phase1-vision/models/exported/phase1_1/classifier/` (hashes: *Phase 1.1 model files* at the top).
 >
-> **Status: TODO, FP32 exported, not yet evaluated.** Values marked TODO are filled from
-> `models/classifier/model_io.json` after the Phase 1.1 Colab run
-> (`notebooks/train_colab_phase1_1.ipynb`, run `p11_split701515_det320_cls224_s42`).
-> Files will be on Google Drive under `MyDrive/qc-defect-detector/phase1/p11_split701515_det320_cls224_s42/models/classifier/`.
+> **Classifier INT8: SKIPPED. There is no INT8 classifier.** The INT8 export hung in the
+> ai-edge-quantizer calibration step (49 min with no output and no file activity) and was
+> interrupted. `model_io.json` records
+> `"int8": {"status": "skipped", "reason": "hung >45 min in ai-edge-quantizer calibration on Colab, 2026-11-07", "timestamp": "2026-11-07T18:39:43+00:00"}`.
+> The **"INT8 pipeline" is detector INT8 + classifier FP32** (5.8 MB FP32 classifier on top of the
+> 3.4 MB INT8 detector). Exports now run in a child process with a timeout
+> (`scripts/export_child.py`, default 15 min); a classifier INT8 failure is only tolerated with
+> `--allow-skip-int8`, never silently.
 
 YOLOv8n-cls, ImageNet-pretrained, trained on the same 70/15/15 split as the detector
-(`data/cls/{train,val,test}/<class>/`, built by `scripts/build_cls_dataset.py`). One label per
-image (the NEU category). Reference code: `scripts/tflite_utils.py` (`cls_preprocess`,
-`cls_input_tensor`, `run_cls_tflite`). Export: `scripts/export_cls_tflite.py`.
+(`data/cls/{train,val,test}/<class>/`, built by `scripts/build_cls_dataset.py`), imgsz 224,
+patience 20: it early-stopped after **34 epochs** (of 100). One label per image (the NEU category).
+Reference code: `scripts/tflite_utils.py` (`cls_preprocess`, `cls_input_tensor`, `run_cls_tflite`).
+Export: `scripts/export_cls_tflite.py`.
 
 ## Files
 
-| File | What it is |
-|---|---|
-| `defect_cls_yolov8n_224_fp32.tflite` | FP32. Size TODO. SHA-256 TODO. |
-| `defect_cls_yolov8n_224_int8.tflite` | **Does not exist: skipped** (INT8 calibration hung, see above). |
-| `labels.txt` | Same 6 classes, same order as the detector. |
-| `model_io.json` | Machine-written I/O report, including the pre-processing read from the checkpoint. |
+| File | Bytes | SHA-256 |
+|---|---|---|
+| `defect_cls_yolov8n_224_fp32.tflite` | 5,815,905 (5.82 MB) | `34889a816f4319bc693e38fd9faad0560ce2ff07102b543c446704128b51831d` |
+| `defect_cls_yolov8n_224_int8.tflite` | **does not exist: skipped** (see above) | - |
+| `labels.txt` | same 6 classes, same order as the detector | |
+| `model_io.json` | machine-written I/O report, including the pre-processing read from the checkpoint | |
 
 ## Input
 
 | Property | Value | Confirmed |
 |---|---|---|
-| Shape | TODO (expected `[1, 3, 224, 224]`) | TODO |
-| Layout | TODO (expected NCHW, like the detector) | TODO |
-| Dtype | TODO (expected float32 for both files) | TODO |
+| Shape | `[1, 3, 224, 224]` | ✅ FP32 |
+| Layout | **NCHW** (channels first, like the detector). Write `buffer[c*H*W + y*W + x]`. | ✅ FP32 |
+| Dtype | `float32`, no input quantisation (scale 0, zero point 0) | ✅ FP32 |
 | Colour order | RGB | from the training pipeline |
-| Resize | Shorter side -> 224 (bilinear), centre crop 224x224. NEU 200x200 -> plain 224x224 resize. **Not** the detector's letterbox. | `cls_preprocess` matches Ultralytics `classify_transforms(224)` exactly (max diff 0 on 20 test images, local check); the notebook re-checks it on all val + test images against the `.pt` pipeline |
-| Normalisation | `pixel / 255.0` -> 0..1, mean 0, std 1 (no ImageNet mean/std) | Ultralytics `classify_transforms` default; the trained checkpoint's transforms are written to `model_io.json` -> `preprocessing` (TODO confirm) |
+| Resize | Shorter side -> 224 (bilinear), centre crop 224x224. NEU 200x200 -> plain 224x224 resize. **Not** the detector's letterbox. | ✅ checkpoint transforms: `Resize(224, bilinear, antialias=True)`, `CenterCrop(224)` |
+| Normalisation | `pixel / 255.0` -> 0..1, **mean 0, std 1** (no ImageNet mean/std) | ✅ checkpoint transforms: `ToTensor()`, `Normalize(mean=[0,0,0], std=[1,1,1])` |
+
+Reference pre-processing parity: `cls_preprocess` vs the `.pt` pipeline on all 540 val + test
+images, max probability difference **5.8e-6**.
 
 ## Output
 
 | Property | Value | Confirmed |
 |---|---|---|
-| Shape | `[1, 6]` (the export script raises otherwise) | TODO |
-| Dtype | TODO (expected float32) | TODO |
-| Meaning | Class probabilities, **softmax already applied** (export script checks each value in 0..1 and sum = 1 +- 0.01 on a real image) | TODO |
+| Shape | `[1, 6]` | ✅ FP32 |
+| Dtype | `float32`, no output quantisation | ✅ FP32 |
+| Meaning | Class probabilities, **softmax already applied** (each 0..1, sum 1; checked on a real image by the export script) | ✅ FP32 |
 
 Top-1 = argmax, confidence = that probability. Feed it to `fusion.py` (`classifier_top1`).
 
-## Accuracy (TEST split, 270 images)
+## Accuracy (TEST split, 270 images, 45 per class)
 
 | Model | Top-1 | Same top-1 as `.pt` |
 |---|---|---|
-| `.pt` | TODO | - |
-| FP32 `.tflite` | TODO | TODO |
+| `.pt` | **269 / 270 (99.6 %)** (Ultralytics val: top-1 0.996, top-5 1.000) | - |
+| FP32 `.tflite` | **269 / 270 (99.6 %)** | 270 / 270, max probability difference 0.0 |
 | INT8 `.tflite` | skipped | skipped |
+
+The one error: a rolled-in_scale image classified as crazing (`.pt` and FP32 alike). Confusion
+matrix: `results/phase1_1/cls_confusion_test.png`.
 
 ## Fusion (what the app shows)
 
-`phase1-vision/fusion.py` combines both models for one image (thresholds in `FUSION_CONFIG`,
-chosen on VAL by the notebook; current values are placeholders):
+`phase1-vision/fusion.py` combines both models for one image. Thresholds in `FUSION_CONFIG`,
+chosen on VAL by the notebook (`results/phase1_1/fusion_config.json`, FP32 and INT8 pipelines
+summed): **classifier 0.64**; detector per class crazing 0.10, inclusion 0.50, patches 0.55,
+pitted_surface 0.15, rolled-in_scale 0.15, scratches 0.30.
 
 1. kept detections = detections with confidence >= their per-class threshold;
 2. `final_class` = classifier class if its confidence >= `cls_threshold`, else the class of the
@@ -224,3 +264,12 @@ chosen on VAL by the notebook; current values are placeholders):
 3. `alert` = any kept detection OR classifier confidence >= `cls_threshold`;
 4. severity = `severity.py` on the kept boxes of `final_class`; alert without such a box ->
    level `"Review"` (the operator must check the part).
+
+TEST result: fused class correct on **270 / 270** images for the FP32 pipeline and for the INT8
+pipeline (detector INT8 + classifier FP32). The classifier decided 267 images, the detector 3.
+"Review" level: 0 (FP32 pipeline), 5 (INT8 pipeline).
+
+**Caveats.** NEU-DET has no defect-free images, so false alarms on good parts are **not
+measured**. The detector thresholds are low (crazing 0.10) for that reason and must be re-tuned
+with clean-part camera images in Phase 3. All numbers are on NEU lab crops, not on factory camera
+images.

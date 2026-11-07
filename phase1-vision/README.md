@@ -5,12 +5,18 @@
 
 Pipeline: train in Google Colab -> evaluate -> severity rule -> export TFLite FP32 + INT8 -> sanity-check -> document.
 
-**Phase 1.1 (in progress, code ready, Colab run pending):** goal near-zero image-level error.
+**Phase 1.1 (COMPLETE, 2026-11-08):** goal near-zero image-level error.
 New 70/15/15 train/val/test split (210/45/45 per class, seed 42), detector retrained on it, an
 image classifier (YOLOv8n-cls) added, and a deterministic fusion rule (`fusion.py`) that
-combines both. Thresholds are chosen on **val**; every reported number is on **test**.
-Notebook: `notebooks/train_colab_phase1_1.ipynb`. NEU-DET has no defect-free images, so false
-alarms on good parts cannot be measured yet.
+combines both. Thresholds are chosen on **val**; every reported number is on **test** (270 images):
+fused class correct **270/270** (FP32 pipeline and INT8 pipeline = detector INT8 + classifier FP32;
+classifier INT8 export was skipped, it hung), classifier alone 269/270, detector alone 267/270 (FP32) /
+256/270 (INT8), detector mAP50 0.741 (FP32) / 0.693 (INT8). Results in `results/phase1_1/`, models on
+Drive under `MyDrive/qc-defect-detector/phase1/p11_split701515_det320_cls224_s42/models/` and locally in
+`models/exported/phase1_1/` (gitignored). **Phase 3 must use these Phase 1.1 models** (hashes in `MODEL_IO.md`).
+Notebook: `notebooks/train_colab_phase1_1.ipynb`. **Caveats:** NEU-DET has no defect-free images, so
+false alarms on good parts are not measured; the low detector thresholds must be re-tuned with
+clean-part images in Phase 3; lab images only.
 
 ## Layout
 
@@ -81,7 +87,8 @@ Per image: kept detections = conf >= per-class threshold. `final_class` = classi
 confidence >= `cls_threshold`, else the top kept detection's class, else `"no defect found"`.
 `alert` = any kept detection OR classifier confident. Severity = `severity.py` on the kept boxes of
 `final_class`; alert without such a box -> `"Review"` (operator must check). All thresholds in
-`FUSION_CONFIG` (the detector/classifier values there are placeholders until the Colab val sweep).
+`FUSION_CONFIG`, chosen on val (`results/phase1_1/fusion_config.json`): classifier 0.64; detector
+crazing 0.10, inclusion 0.50, patches 0.55, pitted_surface 0.15, rolled-in_scale 0.15, scratches 0.30.
 
 `export_tflite.py` has no fallbacks. If the weights are missing, the checkpoint is not the 6 NEU
 classes, the export fails, or the output is not `[1, 10, N]`, it raises.

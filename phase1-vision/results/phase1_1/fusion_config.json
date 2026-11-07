@@ -1,0 +1,20 @@
+{
+  "selected_on": "val",
+  "run_name": "p11_split701515_det320_cls224_s42",
+  "git_commit": "e48df70b3d3380419941ab52ee18889c0803ac0a",
+  "selection_pipelines": {
+    "fp32": "FP32 pipeline: detector FP32 + classifier FP32",
+    "int8": "INT8 pipeline: detector INT8 + classifier FP32 (classifier INT8 skipped)"
+  },
+  "cls_threshold": 0.64,
+  "det_class_min_confidence": {
+    "crazing": 0.1,
+    "inclusion": 0.5,
+    "patches": 0.55,
+    "pitted_surface": 0.15,
+    "rolled-in_scale": 0.15,
+    "scratches": 0.3
+  },
+  "det_min_confidence": 0.5,
+  "rule": "fusion_eval.py docstring (plateau centre, TFLite pipelines on val summed)"
+}

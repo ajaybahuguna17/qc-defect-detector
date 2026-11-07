@@ -36,7 +36,12 @@ def cfg(**over):
     return c
 
 
-CFG = cfg(cls_threshold=0.80)  # fixed values so the tests do not depend on the placeholders
+# Fixed test thresholds, independent of the tuned FUSION_CONFIG values (those are pinned to
+# results/phase1_1/fusion_config.json by TunedConfigTests below).
+CFG = cfg(cls_threshold=0.80, det_min_confidence=0.50,
+          det_class_min_confidence={"crazing": 0.25, "inclusion": 0.50, "patches": 0.50,
+                                    "pitted_surface": 0.50, "rolled-in_scale": 0.50, "scratches": 0.50})
+TUNED_JSON = Path(__file__).resolve().parents[1] / "results" / "phase1_1" / "fusion_config.json"
 
 
 class ClassifierBranchTests(unittest.TestCase):
@@ -188,6 +193,41 @@ class DeterminismAndConfigTests(unittest.TestCase):
             self.assertIn(k, FUSION_CONFIG)
         self.assertEqual(set(FUSION_CONFIG["det_class_min_confidence"]), set(NEU_CLASSES))
         self.assertEqual(FUSION_CONFIG["classes"], NEU_CLASSES)
+
+
+class TunedConfigTests(unittest.TestCase):
+    """FUSION_CONFIG must hold exactly the thresholds the Phase 1.1 run chose on val."""
+
+    def setUp(self):
+        import json
+        self.tuned = json.loads(TUNED_JSON.read_text(encoding="utf-8"))
+
+    def test_selected_on_val(self):
+        self.assertEqual(self.tuned["selected_on"], "val")
+        self.assertEqual(self.tuned["run_name"], "p11_split701515_det320_cls224_s42")
+
+    def test_thresholds_match_json(self):
+        self.assertEqual(FUSION_CONFIG["cls_threshold"], self.tuned["cls_threshold"])
+        self.assertEqual(FUSION_CONFIG["det_min_confidence"], self.tuned["det_min_confidence"])
+        self.assertEqual(FUSION_CONFIG["det_class_min_confidence"], self.tuned["det_class_min_confidence"])
+
+    def test_explicit_values(self):
+        self.assertEqual(FUSION_CONFIG["cls_threshold"], 0.64)
+        self.assertEqual(FUSION_CONFIG["det_class_min_confidence"],
+                         {"crazing": 0.10, "inclusion": 0.50, "patches": 0.55, "pitted_surface": 0.15,
+                          "rolled-in_scale": 0.15, "scratches": 0.30})
+
+    def test_tuned_config_branches(self):
+        # classifier at 0.64 fires, 0.6399 does not
+        self.assertEqual(fuse([], clf("patches", 0.64), W, H).source, "classifier")
+        self.assertEqual(fuse([], clf("patches", 0.6399), W, H).source, "none")
+        # low crazing detector threshold: a 0.10 crazing box is kept and used when the classifier is unsure
+        r = fuse([det("crazing", 0.10)], clf("inclusion", 0.5), W, H)
+        self.assertEqual((r.final_class, r.source), ("crazing", "detector"))
+        self.assertEqual(fuse([det("crazing", 0.0999)], clf("inclusion", 0.5), W, H).final_class, NO_DEFECT)
+        # patches needs 0.55
+        self.assertEqual(fuse([det("patches", 0.54)], None, W, H).final_class, NO_DEFECT)
+        self.assertEqual(fuse([det("patches", 0.55)], None, W, H).final_class, "patches")
 
 
 class ValidationTests(unittest.TestCase):

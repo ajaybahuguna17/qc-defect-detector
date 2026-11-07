@@ -32,10 +32,13 @@ Every threshold lives in ``FUSION_CONFIG`` (the detector thresholds, the classif
 and, under ``"severity"``, the full severity config). The detector thresholds override the
 severity config's min confidences, so the box filter is the same in both places.
 
-**Threshold status:** ``cls_threshold`` and ``det_class_min_confidence`` below are
-PLACEHOLDERS (the Phase 1 detector values; classifier 0.50) until the Phase 1.1 Colab run picks
-them on the val split (notebook ``train_colab_phase1_1.ipynb``, step "threshold sweep"). Copy
-the chosen values from ``results/phase1_1/fusion_config.json`` into this dict.
+**Threshold status:** ``cls_threshold`` and ``det_class_min_confidence`` below are the values
+chosen on the VAL split by the Phase 1.1 Colab run ``p11_split701515_det320_cls224_s42``
+(``results/phase1_1/fusion_config.json``, FP32 and INT8 pipelines summed). With them the fused
+answer was right on 270/270 TEST images for both pipelines. The detector thresholds are LOW
+(crazing 0.10, pitted_surface / rolled-in_scale 0.15) because NEU-DET has no defect-free images,
+so the sweep never pays for a false alarm on a good part. They MUST be re-tuned with clean-part
+camera images in Phase 3. A unit test keeps this dict equal to fusion_config.json.
 
 Pure standard library (plus ``severity.py``), so it ports line for line to Kotlin.
 """
@@ -64,18 +67,19 @@ REVIEW = "Review"
 FUSION_CONFIG: Dict[str, Any] = {
     # Class order of both models (labels.txt). Detections / classifier classes outside it raise.
     "classes": list(NEU_CLASSES),
-    # Classifier top-1 is trusted when its softmax confidence >= this.  PLACEHOLDER until the val sweep.
-    "cls_threshold": 0.50,
-    # A detection is "kept" when confidence >= its class threshold.  PLACEHOLDER (Phase 1 values)
-    # until the val sweep. Classes not listed use det_min_confidence.
+    # Classifier top-1 is trusted when its softmax confidence >= this. Val sweep, Phase 1.1 run.
+    "cls_threshold": 0.64,
+    # A detection is "kept" when confidence >= its class threshold. Val sweep, Phase 1.1 run.
+    # Low because NEU has no defect-free images (false alarms unmeasured): re-tune in Phase 3.
+    # Classes not listed use det_min_confidence.
     "det_min_confidence": 0.50,
     "det_class_min_confidence": {
-        "crazing": 0.25,
+        "crazing": 0.10,
         "inclusion": 0.50,
-        "patches": 0.50,
-        "pitted_surface": 0.50,
-        "rolled-in_scale": 0.50,
-        "scratches": 0.50,
+        "patches": 0.55,
+        "pitted_surface": 0.15,
+        "rolled-in_scale": 0.15,
+        "scratches": 0.30,
     },
     # Area / count rule for the kept boxes of final_class (see severity.py). Its own min-confidence
     # entries are replaced by the detector thresholds above at run time.
