@@ -6,7 +6,8 @@
 # torch / torchvision / numpy / pillow / opencv / matplotlib / pyyaml are NOT pinned here on purpose:
 # Colab ships CUDA-matched builds and re-installing them breaks the GPU runtime. litert-torch 0.10.0
 # needs torch>=2.4,<2.15, which every current Colab image satisfies. The notebook writes the exact
-# versions it ran with (torch, CUDA, numpy, ...) into results/phase1_results.json.
+# versions it ran with (torch, CUDA, numpy, ...) into phase1_results.json (Colab: /content/work/results/,
+# copied to Drive <DRIVE_DIR>/<run-name>/results/).
 #
 # Install:  pip install -r phase1-vision/requirements.txt
 
