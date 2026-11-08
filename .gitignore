@@ -52,6 +52,8 @@ phase1-vision/data/dataset/labels/test/*
 phase1-vision/data/dataset/labels/*.cache
 # Classifier ImageFolder copy of the same split (scripts/build_cls_dataset.py)
 phase1-vision/data/cls/
+# Annotated output of the Phase 1 demo CLI
+phase1-vision/demo/out/
 
 # Ignore general dataset archives
 *.zip

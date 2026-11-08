@@ -1,0 +1,10 @@
+# Phase 1 local demo (phase1-vision/demo): CPU only, offline, no torch, no ultralytics.
+# Install:  pip install -r phase1-vision/requirements-demo.txt
+
+gradio==6.31.0                  # local web UI (demo/app.py)
+ai-edge-litert==2.3.0           # TFLite/LiteRT interpreter, same version as the Phase 1.1 run
+numpy==2.5.3
+pillow==12.3.0
+# Required: without OpenCV, tflite_utils.letterbox resizes with PIL, which gives different pixels
+# from the training/evaluation pipeline. demo/pipeline.py refuses to start without it.
+opencv-python-headless==4.13.0.92

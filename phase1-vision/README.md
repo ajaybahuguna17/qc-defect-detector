@@ -37,7 +37,8 @@ phase1-vision/
 │   └── tflite_utils.py           # reference preprocess + decode + NMS, classifier preprocess (Android must match)
 ├── severity.py                   # deterministic Low/Medium/High/Critical rule (one config dict)
 ├── fusion.py                     # deterministic detector + classifier fusion (final class, alert, severity / Review)
-├── tests/                        # unit tests: severity, fusion, split/sweep tools, decoder
+├── demo/                         # local offline demo: Gradio UI + CLI on the Phase 1.1 TFLite models (see demo/README.md)
+├── tests/                        # unit tests: severity, fusion, split/sweep tools, decoder, demo
 ├── MODEL_IO.md                   # TFLite input/output contract for the Android app
 ├── requirements.txt              # pinned Colab/export environment
 ├── data/                         # raw/, dataset/ images+labels and cls/ are gitignored; data.yaml has no absolute path
