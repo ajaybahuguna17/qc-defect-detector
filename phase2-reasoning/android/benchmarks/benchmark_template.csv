@@ -1,0 +1,2 @@
+device,model,executorch_version,load_ms,first_token_ms,tokens_per_second,uncached_advisory_ms,cached_advisory_ms,ram_before_mb,ram_during_generation_mb,notes
+Samsung Galaxy A12,llama3_2.pte,1.5.1,,,,,,,,
