@@ -79,6 +79,7 @@ fun AANetraScreen(
     onTakePhoto: () -> Unit,
     onRetryModel: () -> Unit,
     onRetryAdvice: () -> Unit,
+    onNewInspection: () -> Unit,
     onAcceptMobileData: () -> Unit,
     onDeclineMobileData: () -> Unit,
     onOpenDeveloperSettings: () -> Unit
@@ -135,15 +136,26 @@ fun AANetraScreen(
                 ImageWithBoxes(it)
                 VisionDetailsCard(it)
                 AdviceCard(advice, onRetryAdvice)
+                OutlinedButton(
+                    onClick = onNewInspection,
+                    enabled = !busy,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, Steel.Orange)
+                ) { Text("New inspection", color = Steel.Orange, style = MaterialTheme.typography.labelLarge) }
             }
 
             if (result == null && !busy) {
                 SteelCard {
-                    Text(
-                        "Pick an image or take a photo of a steel surface to inspect it.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Steel.TextDim
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf(
+                            "1. Pick or take a photo",
+                            "2. See the decision",
+                            "3. Read the AI advice"
+                        ).forEach {
+                            Text(it, style = MaterialTheme.typography.bodyLarge, color = Steel.TextDim)
+                        }
+                    }
                 }
             }
 
@@ -437,7 +449,7 @@ private fun VisionDetailsCard(r: InspectionViewModel.InspectionResult) {
             val conf = e.classifierConfidence?.let { String.format(Locale.US, "%.1f%%", it * 100f) } ?: "n/a"
             DetailLine("Decided by", e.decidedBy)
             DetailLine("Classifier", "${e.classifierClass ?: "n/a"} ($conf)")
-            DetailLine("Boxes", "${e.numFinalBoxes} of ${e.numBoxes} match final class")
+            DetailLine("Defects found", "${e.numBoxes}")
             DetailLine(
                 "Vision time",
                 "${r.visionMs} ms (detector ${e.detectorMs} ms, classifier ${e.classifierMs} ms)"

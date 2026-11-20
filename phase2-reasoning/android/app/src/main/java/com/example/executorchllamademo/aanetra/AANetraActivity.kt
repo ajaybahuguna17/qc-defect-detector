@@ -73,6 +73,7 @@ class AANetraActivity : ComponentActivity() {
                     onTakePhoto = ::onTakePhoto,
                     onRetryModel = viewModel::retryModel,
                     onRetryAdvice = viewModel::retryAdvice,
+                    onNewInspection = viewModel::clearResult,
                     onAcceptMobileData = viewModel::acceptMobileData,
                     onDeclineMobileData = viewModel::declineMobileData,
                     onOpenDeveloperSettings = {

@@ -114,6 +114,15 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
 
     fun declineMobileData() = ModelManager.declineMobileData()
 
+    /** "New inspection": clear the screen back to the empty home state. */
+    fun clearResult() {
+        if (_busy.value) return
+        adviceJob?.cancel()
+        _result.value = null
+        _advice.value = AdviceState.None
+        _error.value = null
+    }
+
     fun retryAdvice() {
         val current = _result.value ?: return
         if (current.event.alert && _advice.value is AdviceState.Failed) requestAdvice(current.event)
