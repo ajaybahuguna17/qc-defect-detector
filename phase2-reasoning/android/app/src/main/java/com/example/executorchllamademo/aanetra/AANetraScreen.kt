@@ -78,6 +78,7 @@ fun AANetraScreen(
     onPickImage: () -> Unit,
     onTakePhoto: () -> Unit,
     onRetryModel: () -> Unit,
+    onRetryAdvice: () -> Unit,
     onAcceptMobileData: () -> Unit,
     onDeclineMobileData: () -> Unit,
     onOpenDeveloperSettings: () -> Unit
@@ -133,7 +134,7 @@ fun AANetraScreen(
                 DecisionCard(it)
                 ImageWithBoxes(it)
                 VisionDetailsCard(it)
-                AdviceCard(advice)
+                AdviceCard(advice, onRetryAdvice)
             }
 
             if (result == null && !busy) {
@@ -454,7 +455,7 @@ private fun DetailLine(label: String, value: String) {
 }
 
 @Composable
-private fun AdviceCard(advice: AdviceState) {
+private fun AdviceCard(advice: AdviceState, onRetryAdvice: () -> Unit) {
     SteelCard {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("ADVICE", style = MaterialTheme.typography.labelMedium, color = Steel.Orange)
@@ -492,11 +493,17 @@ private fun AdviceCard(advice: AdviceState) {
                     }
                     Text(footer, style = MaterialTheme.typography.labelMedium, color = Steel.TextDim)
                 }
-                is AdviceState.Failed -> Text(
-                    "Advice failed: ${advice.message}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Steel.Red
-                )
+                AdviceState.Failed -> {
+                    Text(
+                        "Advice could not be generated",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Steel.Red
+                    )
+                    OutlinedButton(
+                        onClick = onRetryAdvice,
+                        border = BorderStroke(1.dp, Steel.Orange)
+                    ) { Text("Retry advice", color = Steel.Orange) }
+                }
             }
             Text(
                 "Advice explains the defect only; it never changes the decision.",

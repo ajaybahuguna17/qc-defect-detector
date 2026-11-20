@@ -10,6 +10,7 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.executorchllamademo.ETLogging
 import com.team.defectqc.advisor.LlamaAdvisor
 import com.team.defectqc.core.Advisory
 import com.team.defectqc.core.DetectionEvent
@@ -38,7 +39,8 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
         data class NotReady(val reason: String) : AdviceState
         data class Generating(val startedAtMs: Long) : AdviceState
         data class Done(val advisory: Advisory) : AdviceState
-        data class Failed(val message: String) : AdviceState
+        /** Details are logged (Log.e + Developer settings logs), never shown here. */
+        data object Failed : AdviceState
     }
 
     data class InspectionResult(
@@ -70,7 +72,9 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
 
     private val advisor = LlamaAdvisor(
         modelProvider = { ModelManager.module },
-        generationExecutor = ModelManager.llmExecutor
+        generationExecutor = ModelManager.llmExecutor,
+        // Total length (prompt + answer) = the .pte max context. The prompt alone is ~200 tokens.
+        sequenceLength = 512
     )
 
     private var adviceJob: Job? = null
@@ -109,6 +113,11 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
     fun acceptMobileData() = ModelManager.start(getApplication(), allowMobileData = true)
 
     fun declineMobileData() = ModelManager.declineMobileData()
+
+    fun retryAdvice() {
+        val current = _result.value ?: return
+        if (current.event.alert && _advice.value is AdviceState.Failed) requestAdvice(current.event)
+    }
 
     fun inspect(uri: Uri) {
         if (_busy.value) return
@@ -167,8 +176,12 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
                 throw e
             } catch (e: Throwable) {
                 Log.e(TAG, "Advice failed", e)
+                ETLogging.getInstance().log(
+                    "AANetra advice failed: ${e.javaClass.simpleName}: ${e.message}\n" +
+                        Log.getStackTraceString(e)
+                )
                 if (_result.value?.event?.id == event.id) {
-                    _advice.value = AdviceState.Failed(e.message ?: e.javaClass.simpleName)
+                    _advice.value = AdviceState.Failed
                 }
             }
         }
