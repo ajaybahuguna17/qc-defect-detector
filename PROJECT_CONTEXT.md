@@ -1,6 +1,8 @@
 # PROJECT CONTEXT & MASTER TRACKER
 
 **Project Title:** Real-Time Industrial Defect Detection & Quality-Control Assistant  
+**App name:** AANetra (A, A, N team initials + "netra" = eye). Use **AANetra** as the Android app display name in Phase 3.  
+**Tagline:** On-device steel defect inspection.  
 **Theme:** Manufacturing & Industry 4.0 (Bharat AI-SoC Challenge 2026–27, PS5)  
 **Target device:** Arm Android phone (TFLite for vision, ExecuTorch for the Llama advisor)  
 **Current Status:** Phase 1 (vision) COMPLETE. **Phase 1.1 (near-zero image-level error) COMPLETE: fused 270/270 on the test set (lab images, defect-free parts unmeasured).** Phase 2 (advisory LLM) NEXT. Phase 3 NOT STARTED.  
@@ -192,6 +194,7 @@ SHA-256 and size of every model file: `phase1-vision/MODEL_IO.md` -> *Phase 1.1 
 
 ### Phase 3 status: NOT STARTED
 No Android code, logging, UI or benchmarks exist yet.
+- App display name (launcher label, `app_name`): **AANetra**. Tagline: "On-device steel defect inspection."
 
 ---
 
@@ -255,3 +258,4 @@ Checklist for the Bharat AI-SoC Challenge submission. None of it is done yet.
 | 2026-11-08 | Phase 1.1 | Student 3 | **Phase 1.1 complete.** Results of run `p11_split701515_det320_cls224_s42` committed to `phase1-vision/results/phase1_1/`. TEST: fused 270/270 (FP32 pipeline and INT8 pipeline = detector INT8 + classifier FP32), classifier 269/270, detector-only 267/270 (FP32) / 256/270 (INT8), detector mAP50 0.741 (FP32) / 0.693 (INT8). Val-chosen thresholds put in `FUSION_CONFIG` (classifier 0.64; detector crazing 0.10, inclusion 0.50, patches 0.55, pitted_surface 0.15, rolled-in_scale 0.15, scratches 0.30); tests pin them to `fusion_config.json`. `MODEL_IO.md` classifier section filled (INT8 skipped). Caveats: no defect-free images, low detector thresholds to re-tune in Phase 3, lab images only. SHA-256 + size of every file in `models/exported/phase1_1/` added to `MODEL_IO.md`; these Phase 1.1 models are marked as the ones Phase 3 must use. |
 | 2026-11-08 | All | Student 3 | `PROJECT_CONTEXT.md`: Pipeline A in Section 1 and the Section 3 diagram now = detector YOLOv8n (TFLite FP32/INT8) + classifier YOLOv8n-cls (TFLite FP32) -> `fusion.py` (`FUSION_CONFIG`) -> `severity.py`, Pipeline B separate; documented from the code that the app's detector thresholds come from `FUSION_CONFIG` and `SEVERITY_CONFIG` min confidences apply only to the Phase 1 standalone path; new sections *Carried over to Phase 3* and *Before submission (23 Nov 2026)*; caveat that all 270 Phase 1.1 test images were in the Phase 1 val set used to tune the severity cutoffs; changelog sorted oldest first, authors renamed. |
 | 2026-11-08 | Phase 1 | Student 3 | Local offline demo: `phase1-vision/demo/` (`app.py` Gradio UI, `predict.py` CLI, shared `pipeline.py`), `requirements-demo.txt`, `tests/test_demo.py`, 12 TEST-split examples. TFLite only, via `tflite_utils.py`, `fusion.py` and `severity.py`, decoded at conf 0.05 / NMS 0.45 like the Phase 1.1 evaluation. On all 270 TEST images on Windows CPU it reproduces the committed results: fused 270/270 for both pipelines, same severity distributions, Review 0 (FP32) / 5 (INT8). Median invoke: detector 37 ms FP32 / 29 ms INT8, classifier 9 ms (laptop, not phone). |
+| 2026-11-20 | Phase 3 | Team | App name recorded: **AANetra** (A, A, N team initials + "netra" = eye), tagline "On-device steel defect inspection". AANetra is the Android app display name in Phase 3. |
