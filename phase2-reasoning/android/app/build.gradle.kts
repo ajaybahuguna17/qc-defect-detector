@@ -229,6 +229,9 @@ android {
             testInstrumentationRunnerArguments["tokenizerFile"] = preset["tokenizerFile"] as String
         }
 
+        // Target phones are 64-bit ARM; dropping other ABIs keeps the APK small.
+        ndk { abiFilters += "arm64-v8a" }
+
         vectorDrawables { useSupportLibrary = true }
         externalNativeBuild { cmake { cppFlags += "" } }
     }
@@ -250,6 +253,14 @@ android {
         compose = true
     }
     packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
+
+    // Keep only the FP32 .tflite vision models in the APK: drop PyTorch *.pt checkpoints
+    // and the unused INT8 detector (AGP default ignore rules kept).
+    androidResources {
+        ignoreAssetsPattern =
+            "!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~:" +
+                "!*.pt:!defect_yolov8n_320_int8.tflite"
+    }
 }
 
 dependencies {

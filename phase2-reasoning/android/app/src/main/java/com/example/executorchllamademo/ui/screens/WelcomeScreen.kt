@@ -61,7 +61,7 @@ fun WelcomeScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "ExecuTorch Llama Demo",
+                text = "AANetra - Developer settings",
                 color = appColors.textOnNavBar,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
@@ -78,14 +78,14 @@ fun WelcomeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Welcome to ExecuTorch Llama Demo",
+                text = "Developer settings",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = appColors.settingsText
             )
 
             Text(
-                text = "Configure your LLM model and app settings to get started.",
+                text = "Advanced Llama model and app settings. Operators do not need these screens.",
                 fontSize = 14.sp,
                 color = appColors.settingsSecondaryText
             )

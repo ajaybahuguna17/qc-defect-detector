@@ -151,7 +151,7 @@ fun ChatScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Chat with assistant",
+                        text = "AANetra - Llama console",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )

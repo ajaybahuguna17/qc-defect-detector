@@ -6,6 +6,14 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!--
+        Network permissions are used ONLY by aanetra/ModelManager.kt for the one-time
+        Llama model download (GitHub release). There is no other network code in the app:
+        vision and Llama inference run fully on-device and offline.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <uses-feature android:name="android.hardware.camera" />
 
     <application
@@ -27,16 +35,34 @@
         <activity
             android:name=".AppSettingsActivity"
             android:exported="false" />
+        <!-- AANetra operator screen is the launcher. -->
         <activity
-            android:name=".WelcomeActivity"
+            android:name=".aanetra.AANetraActivity"
             android:exported="true"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+            android:label="@string/app_name"
+            android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Old LlamaDemo screens: reachable only via the gear icon ("Developer settings"). -->
+        <activity
+            android:name=".WelcomeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
         <uses-native-library
             android:name="libcdsprpc.so"
