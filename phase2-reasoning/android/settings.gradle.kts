@@ -17,4 +17,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "person-b-advisor"
 
-include(":core", ":advisor", ":vision")
+include(":app", ":core", ":advisor", ":vision")

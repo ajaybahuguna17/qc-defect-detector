@@ -16,7 +16,7 @@ import java.util.concurrent.Executor
 class LlamaAdvisor(
     private val modelProvider: () -> LlmModule?,
     generationExecutor: Executor,
-    private val sequenceLength: Int = 512
+    private val sequenceLength: Int = 80
 ) : Advisor {
 
     private val dispatcher: CoroutineDispatcher =
@@ -141,6 +141,8 @@ override suspend fun advise(event: DetectionEvent): Advisory =
         )
 
         val elapsed = SystemClock.elapsedRealtime() - start
+        Log.i(TAG, "Generation stats: $stats")
+Log.i(TAG, "Generation elapsed: $elapsed ms")
 
         error?.let {
             throw IllegalStateException(it)

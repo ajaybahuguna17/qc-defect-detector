@@ -1,0 +1,25 @@
+
+base:
+  model_class: llama3_2
+  checkpoint: models/llama3-2-1b/original/consolidated.00.pth
+  params: models/llama3-2-1b/original/params.json
+  tokenizer_path: models/llama3-2-1b/original/tokenizer.model
+  metadata: '{"get_bos_id":128000, "get_eos_ids":[128009, 128001]}'
+
+model:
+  use_kv_cache: True
+  use_sdpa_with_kv_cache: True
+
+quantization:
+  embedding_quantize: 4,32
+  qmode: 8da4w
+
+backend:
+  xnnpack:
+    enabled: True
+    extended_ops: True
+
+export:
+  max_seq_length: 512
+  max_context_length: 512
+  output_dir: models/exported
