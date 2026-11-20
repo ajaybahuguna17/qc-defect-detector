@@ -252,88 +252,8 @@ fun ChatScreen(
             }
 
             // Chat input
-           // Temporary Industrial Defect Advisor Test Button
-Button(
-   onClick = {
-    viewModel.generateDefectAdvisory(
-       DetectionEvent(
-    id = "TEST-001",
-    timestampEpochMs = System.currentTimeMillis(),
-    imageName = "test_scratches.jpg",
-    detector = "fp32",
-    alert = true,
-    finalClass = "scratches",
-    decidedBy = "classifier",
-    classifierClass = "scratches",
-    classifierConfidence = 0.94f,
-    numBoxes = 1,
-    numFinalBoxes = 1,
-    largestAreaPct = 5.0f,
-    severityLevel = "Medium",
-    reason = "Classifier selected scratches with confidence 0.94.",
-    boxes = listOf(
-        DefectBox(
-            className = "scratches",
-            confidence = 0.94f,
-            bboxXYXY = listOf(10f, 20f, 30f, 40f)
-        )
-    )
-)
-    )
-},
-    enabled = viewModel.isModelReady && !viewModel.isGenerating,
-    modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 12.dp, vertical = 6.dp)
-) {
-    Text("Generate Defect Advisory")
-}
 
-// Temporary Clean Inspection Test Button
 
-// Temporary Clean Inspection Test Button
-Button(
-    onClick = {
-        viewModel.generateDefectAdvisory(
-            DetectionEvent(
-                id = "TEST-CLEAN-001",
-                timestampEpochMs = System.currentTimeMillis(),
-                imageName = "clean_surface.jpg",
-                detector = "fp32",
-                alert = false,
-                finalClass = "no defect found",
-                decidedBy = "none",
-                classifierClass = null,
-                classifierConfidence = null,
-                numBoxes = 0,
-                numFinalBoxes = 0,
-                largestAreaPct = null,
-                severityLevel = null,
-                reason = "No defects detected.",
-                boxes = emptyList()
-            )
-        )
-    },
-    enabled = !viewModel.isGenerating,
-    modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 12.dp, vertical = 6.dp)
-) {
-    Text("Test Clean Inspection")
-}
-
-// Temporary Vision Model Test Button
-Button(
-    onClick = {
-        viewModel.runVisionModelSmokeTest()
-    },
-    enabled = !viewModel.isGenerating,
-    modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 12.dp, vertical = 6.dp)
-) {
-    Text("Test Vision Models")
-}
 
 
 // Select an image specifically for defect inspection

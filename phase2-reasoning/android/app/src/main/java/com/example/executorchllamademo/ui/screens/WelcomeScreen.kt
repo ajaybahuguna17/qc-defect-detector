@@ -23,7 +23,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
@@ -42,7 +41,7 @@ import com.example.executorchllamademo.ui.theme.LocalAppColors
 @Composable
 fun WelcomeScreen(
     onLoadModelClick: () -> Unit = {},
-    onDownloadModelClick: () -> Unit = {},
+
     onAppSettingsClick: () -> Unit = {}
 ) {
     val appColors = LocalAppColors.current
@@ -102,12 +101,7 @@ fun WelcomeScreen(
             )
 
             // Download Preset Model Card
-            WelcomeCard(
-                title = "Preset model",
-                description = "Download a pre-configured model from the cloud.",
-                icon = Icons.Filled.CloudDownload,
-                onClick = onDownloadModelClick
-            )
+
 
             // App Settings Card
             WelcomeCardNoDescription(
