@@ -56,10 +56,13 @@ class FusionSeverityTest {
     }
 
     @Test
-    fun placeholderNotSteelThresholdIsHalf() {
-        assertEquals(0.50f, VisionConfig.NOT_STEEL_THRESHOLD)
-        val r = FusionSeverity.combine(emptyList(), probs(CLS7, VisionConfig.NOT_STEEL, 0.5f), W, H, classNames = CLS7)
-        assertEquals(VisionDecision.RETAKE, r.decision)
+    fun tunedNotSteelThresholdIsUsedByDefault() {
+        assertEquals(0.33f, VisionConfig.NOT_STEEL_THRESHOLD)
+        val at = FusionSeverity.combine(emptyList(), probs(CLS7, VisionConfig.NOT_STEEL, 0.33f), W, H, classNames = CLS7)
+        assertEquals(VisionDecision.RETAKE, at.decision)
+        // 0.32 on not_steel: still top-1 (others share 0.68 / 6), but below t_ns -> no RETAKE
+        val below = FusionSeverity.combine(emptyList(), probs(CLS7, VisionConfig.NOT_STEEL, 0.32f), W, H, classNames = CLS7)
+        assertNull(below.decision)
     }
 
     @Test

@@ -4,9 +4,10 @@ package com.team.defectqc.vision
  * Every vision threshold of the app in one place.
  *
  * Fusion values mirror `FUSION_CONFIG` in phase1-vision/fusion.py (Phase 1.1 run
- * p11_split701515_det320_cls224_s42). `notSteelThreshold` is a PLACEHOLDER (0.50) until the
- * Phase 1.2 Colab run p12_cls7_notsteel_s42 picks t_ns on val; it only matters with the 7-class
- * classifier v2 (the 6-class model never outputs not_steel).
+ * p11_split701515_det320_cls224_s42). `NOT_STEEL_THRESHOLD` 0.33 is the
+ * val-chosen t_ns of the Phase 1.2 run p12_cls7_notsteel_s42 (results/phase1_2/fusion_config.json,
+ * pinned by FusionConfigPinTest); it only matters with the 7-class classifier v2 (the 6-class
+ * model never outputs not_steel).
  *
  * The unsure-HOLD values and [ImageCheckConfig] are app-only safety gates (not in fusion.py).
  */
@@ -30,8 +31,8 @@ object VisionConfig {
     // ---- fusion (fusion.py FUSION_CONFIG) ----
     const val CLASSIFIER_THRESHOLD = 0.64f
 
-    /** PLACEHOLDER: TODO set from the Phase 1.2 run (fusion_config.json -> not_steel_threshold). */
-    const val NOT_STEEL_THRESHOLD = 0.50f
+    /** Phase 1.2 run p12_cls7_notsteel_s42, fusion_config.json -> not_steel_threshold. */
+    const val NOT_STEEL_THRESHOLD = 0.33f
 
     val DETECTOR_CLASS_THRESHOLDS = mapOf(
         "crazing" to 0.10f,

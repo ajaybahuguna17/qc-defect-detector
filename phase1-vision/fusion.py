@@ -48,8 +48,10 @@ answer was right on 270/270 TEST images for both pipelines. The detector thresho
 so the sweep never pays for a false alarm on a good part. They MUST be re-tuned with clean-part
 camera images in Phase 3. A unit test keeps this dict equal to fusion_config.json.
 
-``not_steel_threshold`` is a PLACEHOLDER (0.50) until the Phase 1.2 Colab run
-``p12_cls7_notsteel_s42`` picks t_ns on VAL (steel false rejection <= 1 %). It only matters with
+``not_steel_threshold`` = 0.33 was chosen on VAL by the Phase 1.2 Colab run ``p12_cls7_notsteel_s42``
+(``results/phase1_2/fusion_config.json``: most not_steel rejected with steel false rejection <= 1 %;
+val 300/300 not_steel rejected, 1/270 steel false-rejected). ``cls_threshold`` 0.64 was re-checked
+on that run and kept. A unit test keeps both equal to that file. The gate only matters with
 classifier v2 (7 outputs); classifier v1 never outputs not_steel.
 
 Pure standard library (plus ``severity.py``), so it ports line for line to Kotlin.
@@ -104,10 +106,9 @@ FUSION_CONFIG: Dict[str, Any] = {
     "no_defect_label": NO_DEFECT,
     "review_level": REVIEW,
     # Phase 1.2 reject gate: classifier top-1 == not_steel_class with p >= not_steel_threshold
-    # -> not_steel_label, alert False, decision RETAKE. PLACEHOLDER 0.50: TODO set from the
-    # Phase 1.2 run p12_cls7_notsteel_s42 (val, steel false rejection <= 1 %).
+    # -> not_steel_label, alert False, decision RETAKE. Val sweep, Phase 1.2 run p12_cls7_notsteel_s42.
     "not_steel_class": NOT_STEEL,
-    "not_steel_threshold": 0.50,
+    "not_steel_threshold": 0.33,
     "not_steel_label": NOT_STEEL_LABEL,
     "retake_decision": RETAKE,
 }

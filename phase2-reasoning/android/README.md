@@ -64,7 +64,7 @@ All thresholds are in `vision/.../VisionConfig.kt`. Order for one photo:
    textures are smooth (the 12 demo examples measure 9.6 to 462), and a JVM test requires all 12
    to pass with a 3x margin.
 2. **not_steel gate** (same as `phase1-vision/fusion.py`, classifier v2 only): top-1 `not_steel`
-   with p >= `NOT_STEEL_THRESHOLD` (placeholder 0.50 until the Phase 1.2 run) -> "not a steel
+   with p >= `NOT_STEEL_THRESHOLD` (0.33, chosen on val by the Phase 1.2 run) -> "not a steel
    surface", no alert, no severity, **RETAKE**, detector boxes ignored.
 3. Phase 1.1 fusion + severity, unchanged.
 4. **Unsure -> HOLD** (app only, not in fusion.py): on an alert, if the classifier is below its

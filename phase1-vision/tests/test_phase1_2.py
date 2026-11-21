@@ -330,5 +330,33 @@ class ReorderPermutationTests(unittest.TestCase):
             permutation(NEU_CLASSES, CLS7_CLASSES)
 
 
+P12_JSON = ROOT / "results" / "phase1_2" / "fusion_config.json"
+
+
+class Phase12TunedConfigTests(unittest.TestCase):
+    """FUSION_CONFIG must hold exactly the thresholds the Phase 1.2 run chose on val."""
+
+    def setUp(self):
+        import json
+        self.tuned = json.loads(P12_JSON.read_text(encoding="utf-8"))
+
+    def test_selected_on_val(self):
+        self.assertEqual(self.tuned["selected_on"], "val")
+        self.assertEqual(self.tuned["run_name"], "p12_cls7_notsteel_s42")
+
+    def test_thresholds_match_json(self):
+        self.assertEqual(FUSION_CONFIG["not_steel_threshold"], self.tuned["not_steel_threshold"])
+        self.assertEqual(FUSION_CONFIG["cls_threshold"], self.tuned["cls_threshold"])
+        self.assertEqual(FUSION_CONFIG["det_class_min_confidence"], self.tuned["det_class_min_confidence"])
+        self.assertEqual(self.tuned["classifier_classes"], CLS7_CLASSES)
+
+    def test_explicit_values(self):
+        self.assertEqual(FUSION_CONFIG["not_steel_threshold"], 0.33)
+        self.assertEqual(FUSION_CONFIG["cls_threshold"], 0.64)
+
+    def test_tuned_gate(self):
+        self.assertEqual(fuse([], clf(NOT_STEEL, 0.33), W, H).decision, RETAKE)
+        self.assertIsNone(fuse([], clf(NOT_STEEL, 0.3299), W, H).decision)
+
 if __name__ == "__main__":
     unittest.main()

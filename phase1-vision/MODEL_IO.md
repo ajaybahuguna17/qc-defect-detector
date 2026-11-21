@@ -276,13 +276,21 @@ images.
 
 # Image classifier v2 (Phase 1.2): 7 classes with `not_steel`
 
-> **Status: PLANNED, values TODO until the Phase 1.2 Colab run** `p12_cls7_notsteel_s42`
-> (`notebooks/train_colab_phase1_2.ipynb`). Nothing below marked TODO has been measured yet. Until then
-> the app keeps using the Phase 1.1 6-class classifier above.
+> **Status: confirmed (FP32), with a real-photo caveat.** Values below come from the Phase 1.2 Colab
+> run `p12_cls7_notsteel_s42` (Tesla T4, Ultralytics 8.4.198, notebook `train_colab_phase1_2.ipynb` at
+> commit `864ea7f`, 2026-11-21), file `results/phase1_2/phase1_2_results.json` and `fusion_config.json`.
+> Models on Google Drive under `MyDrive/qc-defect-detector/phase1/p12_cls7_notsteel_s42/models/classifier/`
+> and locally in `phase1-vision/models/exported/phase1_2/classifier/` (gitignored).
+>
+> **Real-photo caveat (2026-11-21, local check, 16 phone photos not in git):** all 4 photos of bare
+> steel were rejected as not_steel with p ~ 1.00, even after grayscale + 200x200 centre crop. The model
+> separates "NEU lab crop" from "everything else", not "steel" from "not steel". It must not be used
+> on real camera photos until it is retrained with real steel photos (see PROJECT_CONTEXT.md, Phase 1.2).
 
 Same architecture and pre-processing as the Phase 1.1 classifier (YOLOv8n-cls from `yolov8n-cls.pt`,
-imgsz 224, patience 20, seed 42), plus a 7th class `not_steel` trained on ~2,000 COCO / DTD / Places365
-images (`DATA_SOURCES.md`). The **detector is unchanged** (Phase 1.1 files above).
+imgsz 224, patience 20, seed 42; early-stopped after **53 epochs**, 17.1 min), plus a 7th class
+`not_steel` trained on 1,400 COCO / DTD / Places365 images (`DATA_SOURCES.md`). The **detector is
+unchanged** (Phase 1.1 files above).
 
 ## Class order (labels.txt)
 
@@ -296,27 +304,33 @@ images (`DATA_SOURCES.md`). The **detector is unchanged** (Phase 1.1 files above
 | 5 | scratches |
 | 6 | **not_steel** |
 
-Indices 0-5 are the detector order, unchanged. Ultralytics' ImageFolder would put `not_steel` at
-index 2 (alphabetical); `scripts/reorder_cls_classes.py` permutes the trained head to this order and
-the notebook checks it on real images. `fusion.CLS7_CLASSES` holds this list.
+Indices 0-5 are the detector order, unchanged. Ultralytics' ImageFolder put `not_steel` at index 2
+(alphabetical); `scripts/reorder_cls_classes.py` permuted the trained head to this order (checked on 20
+real images: max probability difference 2.4e-7). `fusion.CLS7_CLASSES` / `VisionConfig.CLS7_CLASSES`
+hold this list.
 
-## Files (TODO after the run)
+## Files
+
+SHA-256 and size computed locally on 2026-11-21 (the `.tflite` hash and size match `model_io.json`):
 
 | File | Bytes | SHA-256 |
 |---|---|---|
-| `defect_cls_yolov8n_224_fp32.tflite` (v2, 7 classes) | TODO | TODO |
-| `defect_cls_yolov8n_224_int8.tflite` | **not exported** (recorded as skipped: FP32 only, the INT8 calibration hung in Phase 1.1) | - |
-| `labels.txt` | the 7 classes above | TODO |
-| `model_io.json` | machine-written I/O report | TODO |
-
-Drive: `MyDrive/qc-defect-detector/phase1/p12_cls7_notsteel_s42/models/classifier/`.
+| `defect_cls_yolov8n_224_fp32.tflite` (v2, 7 classes) | 5,821,038 | `550f47cd82f6616d6ba3dd9c79c96700122f476aa0445ec4cdc06bf446a6723e` |
+| `labels.txt` | 77 | `902b1c77f75e7e1de0319274f670d1548be561908c510ca3051a701d7cb821ff` |
+| `model_io.json` | 1,971 | `5386f8ad63188f743b97067a8f37a0e6f97237e1e6367da5ac0d9c3076a8d5f5` |
+| `best_p12_cls7_notsteel_s42_classifier.pt` (contract order) | 2,994,063 | `bbfcc2c7c7a03e8fc6b321c35ba6ce2f72a1e2f2013860ed25f147cec7af0297` |
+| `best_p12_cls7_notsteel_s42_classifier_alphabetical_order.pt` (as trained) | 2,980,808 | `ecf65a2fa63a318bed301087779b210fcd9117c992117c832f8bc33f5d578a31` |
+| `defect_cls_yolov8n_224_int8.tflite` | **not exported** (`model_io.json`: int8 `status: skipped`, FP32 only) | - |
 
 ## Input / output
 
 | Property | Value | Confirmed |
 |---|---|---|
-| Input | same as Phase 1.1: `[1, 3, 224, 224]` NCHW float32, RGB, shorter side -> 224 + centre crop, pixel / 255, mean 0 std 1 | TODO |
-| Output | `[1, 7]` float32, softmax inside (asserted by `export_cls_tflite.py --num-classes 7`) | TODO |
+| Input | same as Phase 1.1: `[1, 3, 224, 224]` NCHW float32, RGB, shorter side -> 224 + centre crop, pixel / 255, mean 0 std 1 | ✅ FP32 |
+| Output | `[1, 7]` float32, softmax inside (asserted by `export_cls_tflite.py --num-classes 7`) | ✅ FP32 |
+
+Reference pre-processing parity (`cls_preprocess` vs `.pt`) on all 1,140 val + test images: max
+probability difference **6.5e-6**.
 
 ## Fusion: the RETAKE rule (`fusion.py`, checked first)
 
@@ -328,15 +342,32 @@ fire and the detector decides alone (rest of the Phase 1.1 rule). All other bran
 
 | Threshold | Value | Source |
 |---|---|---|
-| `not_steel_threshold` (t_ns) | **TODO** (placeholder 0.50 in `FUSION_CONFIG`) | VAL: most not_steel rejected with steel false rejection <= 1 % |
-| `cls_threshold` | 0.64 (Phase 1.1), **TODO re-check** | VAL re-check with classifier v2; kept if 0.64 still reaches the best val score |
+| `not_steel_threshold` (t_ns) | **0.33** | VAL: most not_steel rejected with steel false rejection <= 1 % -> val 300/300 rejected, 1/270 steel false-rejected (0.37 %) |
+| `cls_threshold` | **0.64** (kept) | VAL re-check with classifier v2: 538 correct at 0.64 = best (plateau centre 0.63) |
 | detector thresholds | Phase 1.1, unchanged | |
 
-## Accuracy (TEST, TODO)
+Pinned to `results/phase1_2/fusion_config.json` by `tests/test_phase1_2.py` (Python) and
+`FusionConfigPinTest` (app).
+
+## Accuracy (TEST: 270 steel + 300 not_steel images)
 
 | Metric | Value |
 |---|---|
-| 7x7 confusion (`.pt`, FP32) | TODO (`results/phase1_2/cls7_confusion_test.png`) |
-| Steel fused image-level accuracy, Phase 1.1 detector (target ~270/270) | TODO |
-| not_steel rejection rate (300 test images) | TODO |
-| Steel false-rejection rate (270 test images) | TODO |
+| Classifier v2 top-1, 7 classes | **567 / 570** (`.pt` and FP32 alike); FP32 same top-1 as `.pt` on 570/570, max probability difference 0.0 |
+| Steel fused image-level accuracy, Phase 1.1 detector | **269 / 270** (FP32 pipeline, INT8 pipeline and `.pt` alike; Phase 1.1: 270/270) |
+| not_steel rejected (RETAKE) | **298 / 300 (99.3 %)**: COCO 150/150, Places365 60/60, DTD 88/90 |
+| Steel false-rejected (RETAKE) | **1 / 270 (0.37 %)** |
+
+The 3 errors (same for every pipeline):
+
+| Image | True | Result |
+|---|---|---|
+| `pitted_surface_171.jpg` | pitted_surface | not_steel 0.76 -> RETAKE (steel false rejection) |
+| `dtd__blotchy_0054.jpg` | not_steel (DTD texture) | crazing 0.98 -> defect alert |
+| `dtd__knitted_0137.jpg` | not_steel (DTD texture) | pitted_surface 0.91 -> defect alert |
+
+Confusion matrix: `results/phase1_2/cls7_confusion_test.png`; t_ns sweep: `not_steel_threshold_val.png`.
+
+**Caveats.** Test images are NEU lab crops and public-dataset photos, not factory camera images; see
+the real-photo caveat at the top. Training data licences (DTD, Places365: research / non-commercial;
+COCO: per-image Flickr licences) are in `DATA_SOURCES.md`: research use only.

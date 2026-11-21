@@ -17,7 +17,7 @@ os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"  # no telemetry: must be set be
 import gradio as gr  # noqa: E402
 from PIL import Image, UnidentifiedImageError  # noqa: E402
 
-from pipeline import DemoResult, DefectPipeline, ModelFilesError, annotate  # noqa: E402
+from pipeline import DemoResult, DefectPipeline, ModelFilesError, annotate, line_decision  # noqa: E402
 
 EXAMPLES_DIR = Path(__file__).resolve().parent / "examples"
 # (background, text) of the severity badge
@@ -48,6 +48,7 @@ def card_html(r: DemoResult) -> str:
         classifier = f"{r.classifier_confidence:.3f} ({r.classifier_class})"
     area = "n/a (no box of the final type)" if r.largest_area_pct is None else f"{r.largest_area_pct:.1f} %"
     rows = [
+        ("Decision", f"<b>{html.escape(line_decision(r))}</b>"),
         ("Alert", _badge("ALERT", SEVERITY_COLOURS["Critical"]) if r.alert else _badge("No alert", SEVERITY_COLOURS["Low"])),
         ("Final defect type", f"<b>{html.escape(r.final_class)}</b>"),
         ("Decided by", html.escape(r.decided_by)),
@@ -57,7 +58,7 @@ def card_html(r: DemoResult) -> str:
         ("Severity", _badge(level, SEVERITY_COLOURS.get(level, NO_SEVERITY_COLOURS))),
         ("Reason", html.escape(r.reason)),
         ("Detector time", f"{r.detector_ms:.1f} ms ({r.detector.upper()})"),
-        ("Classifier time", f"{r.classifier_ms:.1f} ms (FP32)"),
+        ("Classifier time", f"{r.classifier_ms:.1f} ms ({r.classifier_version} FP32)"),
     ]
     body = "".join(
         f'<tr><th style="text-align:left;vertical-align:top;padding:4px 12px 4px 0;white-space:nowrap">{name}</th>'

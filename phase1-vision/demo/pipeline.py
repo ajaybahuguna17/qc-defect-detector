@@ -5,6 +5,10 @@ fusion + severity -> one result. TFLite only (no .pt, no ultralytics), CPU, offl
 All model logic stays in the reference code the phone app must match: scripts/tflite_utils.py
 (pre-processing, decoder, NMS), fusion.py (FUSION_CONFIG) and severity.py. Nothing is re-implemented
 here, and missing or wrong model files raise: no other model is ever used instead.
+
+Classifier: the Phase 1.2 7-class v2 (6 NEU classes + not_steel) from models/exported/phase1_2/classifier/
+when its files are there, else the Phase 1.1 6-class v1. The detector is always Phase 1.1. With v2 a
+non-steel photo gets decision RETAKE (fusion.py not_steel gate).
 """
 
 from __future__ import annotations
@@ -26,7 +30,7 @@ try:
 except ImportError as e:
     raise ImportError("opencv is required: pip install -r phase1-vision/requirements-demo.txt") from e
 
-from fusion import FUSION_CONFIG, NEU_CLASSES, classifier_top1, fuse  # noqa: E402
+from fusion import CLS7_CLASSES, FUSION_CONFIG, NEU_CLASSES, classifier_classes, classifier_top1, fuse  # noqa: E402
 from tflite_utils import (  # noqa: E402
     assert_classifier_model, assert_defect_model, describe_cls_io, describe_io, load_interpreter, read_rgb,
     run_cls_tflite, run_tflite_on_image,
@@ -36,6 +40,15 @@ MODELS_DIR = PHASE1_DIR / "models" / "exported" / "phase1_1"
 DRIVE_DIR = "MyDrive/qc-defect-detector/phase1/p11_split701515_det320_cls224_s42/models/{detector,classifier}/"
 DETECTOR_FILES = {"fp32": "defect_yolov8n_320_fp32.tflite", "int8": "defect_yolov8n_320_int8.tflite"}
 CLASSIFIER_FILE = "defect_cls_yolov8n_224_fp32.tflite"
+DRIVE_DIR_V2 = "MyDrive/qc-defect-detector/phase1/p12_cls7_notsteel_s42/models/classifier/"
+
+
+def classifier_dir() -> Path:
+    """phase1_2/classifier (v2) next to MODELS_DIR when its model + labels exist, else MODELS_DIR/classifier (v1)."""
+    v2 = MODELS_DIR.parent / "phase1_2" / "classifier"
+    if (v2 / CLASSIFIER_FILE).is_file() and (v2 / "labels.txt").is_file():
+        return v2
+    return MODELS_DIR / "classifier"
 
 # Same decode as the Phase 1.1 evaluation (notebook BASE_CONF, NMS_IOU). It must stay below every
 # threshold in FUSION_CONFIG: fuse() filters per class afterwards (crazing keeps boxes down to 0.10).
@@ -57,7 +70,7 @@ class ModelFilesError(RuntimeError):
 
 
 def required_files(detectors: Sequence[str]) -> List[Path]:
-    det, cls = MODELS_DIR / "detector", MODELS_DIR / "classifier"
+    det, cls = MODELS_DIR / "detector", classifier_dir()
     return [det / DETECTOR_FILES[d] for d in detectors] + [det / "labels.txt", cls / CLASSIFIER_FILE, cls / "labels.txt"]
 
 
@@ -73,8 +86,9 @@ def check_model_files(detectors: Sequence[str]) -> None:
         )
     for labels in (p for p in required_files(detectors) if p.name == "labels.txt"):
         names = labels.read_text(encoding="utf-8").split()
-        if names != NEU_CLASSES:
-            raise ModelFilesError(f"{labels} lists {names}, expected {NEU_CLASSES}")
+        allowed = [NEU_CLASSES] if labels.parent.name == "detector" else [NEU_CLASSES, CLS7_CLASSES]
+        if names not in allowed:
+            raise ModelFilesError(f"{labels} lists {names}, expected one of {allowed}")
 
 
 class _TimedInterpreter:
@@ -110,6 +124,19 @@ class DemoResult:
     detector_ms: float
     classifier_ms: float
     boxes: List[Dict[str, Any]] = field(default_factory=list)
+    decision: Optional[str] = None    # "RETAKE" (not_steel gate) or None
+    classifier_version: str = "v1"    # "v1" (6 classes) | "v2" (7 classes, not_steel)
+
+
+def line_decision(r: "DemoResult") -> str:
+    """Operator decision, same mapping as the app's QualityDecision.kt (fusion rule only; the app's
+    extra image checks and unsure-HOLD gate are not in this demo)."""
+    if r.decision:
+        return r.decision
+    if not r.alert:
+        return "PASS"
+    return {"low": "ACCEPT", "medium": "REWORK", "high": "REJECT",
+            "critical": "REJECT + STOP LINE"}.get((r.severity_level or "").lower(), "HOLD")
 
 
 def to_result(fused: Any, image_name: str, detector: str, detector_ms: float, classifier_ms: float) -> DemoResult:
@@ -131,6 +158,7 @@ def to_result(fused: Any, image_name: str, detector: str, detector_ms: float, cl
         detector_ms=detector_ms,
         classifier_ms=classifier_ms,
         boxes=fused.kept_detections,
+        decision=fused.decision,
     )
 
 
@@ -143,9 +171,12 @@ class DefectPipeline:
             io = describe_io(interp)
             assert_defect_model(io)
             self._detectors[name] = (interp, io)
-        self._classifier = _TimedInterpreter(load_interpreter(MODELS_DIR / "classifier" / CLASSIFIER_FILE))
+        cls_dir = classifier_dir()
+        self.classifier_classes = (cls_dir / "labels.txt").read_text(encoding="utf-8").split()
+        self.classifier_version = "v2" if self.classifier_classes == CLS7_CLASSES else "v1"
+        self._classifier = _TimedInterpreter(load_interpreter(cls_dir / CLASSIFIER_FILE))
         self._classifier_io = describe_cls_io(self._classifier)
-        assert_classifier_model(self._classifier_io)
+        assert_classifier_model(self._classifier_io, len(self.classifier_classes))
 
     def analyze(self, image_path: Path, detector: str) -> DemoResult:
         image_path = Path(image_path)
@@ -153,8 +184,11 @@ class DefectPipeline:
         height, width = read_rgb(image_path).shape[:2]
         detections, _ = run_tflite_on_image(interp, io, image_path, NEU_CLASSES, DECODE_CONF, DECODE_IOU)
         probs = run_cls_tflite(self._classifier, self._classifier_io, image_path)
-        fused = fuse(detections, classifier_top1(probs.tolist()), width, height)
-        return to_result(fused, image_path.name, detector, interp.last_ms, self._classifier.last_ms)
+        top = classifier_top1(probs.tolist(), classifier_classes(FUSION_CONFIG, len(probs)))
+        fused = fuse(detections, top, width, height)
+        r = to_result(fused, image_path.name, detector, interp.last_ms, self._classifier.last_ms)
+        r.classifier_version = self.classifier_version
+        return r
 
 
 def annotate(image_path: Path, boxes: Sequence[Dict[str, Any]]) -> Image.Image:
@@ -189,6 +223,7 @@ def format_card(r: DemoResult) -> str:
         classifier = f"{r.classifier_class}, confidence {r.classifier_confidence:.3f}"
     area = "n/a (no box of the final type)" if r.largest_area_pct is None else f"{r.largest_area_pct:.1f} %"
     rows = [
+        ("Decision", line_decision(r)),
         ("Alert", "YES" if r.alert else "no"),
         ("Final defect type", r.final_class),
         ("Decided by", r.decided_by),
@@ -199,5 +234,5 @@ def format_card(r: DemoResult) -> str:
         ("Reason", r.reason),
         ("Inference", f"detector {r.detector_ms:.1f} ms, classifier {r.classifier_ms:.1f} ms"),
     ]
-    header = f"=== {r.image_name} | detector {r.detector.upper()} + classifier FP32 ==="
+    header = f"=== {r.image_name} | detector {r.detector.upper()} + classifier {r.classifier_version} FP32 ==="
     return "\n".join([header] + [f"{name + ':':<19}{value}" for name, value in rows])
