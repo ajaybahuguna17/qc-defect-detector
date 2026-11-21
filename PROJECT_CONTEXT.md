@@ -5,7 +5,7 @@
 **Tagline:** On-device steel defect inspection.  
 **Theme:** Manufacturing & Industry 4.0 (Bharat AI-SoC Challenge 2026–27, PS5)  
 **Target device:** Arm Android phone (TFLite for vision, ExecuTorch for the Llama advisor)  
-**Current Status:** Phase 1 (vision) COMPLETE. **Phase 1.1 (near-zero image-level error) COMPLETE: fused 270/270 on the test set (lab images, defect-free parts unmeasured).** Phase 2 (advisory LLM) NEXT. Phase 3 NOT STARTED.  
+**Current Status:** Phase 1 (vision) COMPLETE. **Phase 1.1 (near-zero image-level error) COMPLETE: fused 270/270 on the test set (lab images, defect-free parts unmeasured).** **Phase 1.2 (reject non-steel photos, `not_steel` class) PLANNED: code ready, Colab run pending.** Phase 2 (advisory LLM) NEXT. Phase 3 NOT STARTED.  
 **Last Updated:** 2026-11-08  
 
 > Honesty rule for this file: only mark something done when it has been run and the
@@ -116,6 +116,7 @@ NNAPI is deprecated on recent Android, so use the GPU delegate or XNNPACK.
 | :--- | :--- | :--- | :--- |
 | **Phase 1: Vision model** | NEU-DET → YOLOv8n trained in Colab → evaluation → severity rule → TFLite FP32 + INT8 export → sanity check → I/O documentation | `.tflite` x2, `labels.txt`, `MODEL_IO.md`, results JSON + plots, notebook, `requirements.txt` | **COMPLETE** (2026-11-07) |
 | **Phase 1.1: Image-level accuracy** | 70/15/15 split, detector retrain, YOLOv8n-cls image classifier, deterministic fusion rule, thresholds on val, all numbers on test | `.tflite` x3 (detector FP32 + INT8, classifier FP32; classifier INT8 skipped), `fusion.py`, `fusion_config.json`, `phase1_1_results.json` | **COMPLETE** (2026-11-08) |
+| **Phase 1.2: Reject non-steel photos** | 7th classifier class `not_steel` (COCO / DTD / Places365, ~2,000 images), detector unchanged, RETAKE rule first in `fusion.py`, t_ns on val (steel false rejection <= 1 %), numbers on test | classifier v2 FP32 `.tflite` `[1, 7]`, `fusion_config.json`, `phase1_2_results.json` | **PLANNED** (code ready, Colab run pending) |
 | **Phase 2: Advisory LLM** | Llama-3.2-1B-Instruct → ExecuTorch `.pte` (XNNPACK, 8da4w quantisation) + tokenizer, prompt/parser fixes, runtime on Arm | real `.pte`, tokenizer, measured TTFT and tokens/s | **NEXT** (not started) |
 | **Phase 3: Android app** | CameraX + TFLite + ExecuTorch, alerting UI, Room logging, on-device benchmarks, deliverables (README, report, demo video) | APK, benchmark results, report, video | **NOT STARTED** |
 
@@ -184,6 +185,24 @@ SHA-256 and size of every model file: `phase1-vision/MODEL_IO.md` -> *Phase 1.1 
   High 73 / Critical 120), **not** class accuracy, alerts or detector/classifier numbers: the cutoffs
   are percentiles of box area and play no part in choosing the class. Re-tune severity on Phase 3
   camera images anyway (see *Carried over to Phase 3*).
+
+### Phase 1.2 tracker (PLANNED, Colab run pending): reject non-steel photos
+
+Goal: a photo that is not a steel surface (people, fields, ground, walls, boards, objects) gets
+`"not a steel surface"` + decision **RETAKE** instead of a defect class. The detector is the Phase 1.1
+detector, unchanged. Run folder: Drive `p12_cls7_notsteel_s42` (Phase 1 and Phase 1.1 folders read only).
+Notebook `phase1-vision/notebooks/train_colab_phase1_2.ipynb`, data sources and licences in
+`phase1-vision/DATA_SOURCES.md`.
+
+| # | Step | Status | Evidence / notes |
+| :--- | :--- | :--- | :--- |
+| 1 | Steel split identical to Phase 1.1 | ⏳ Pending (code ready) | NEU 70/15/15 seed 42; file lists pinned in `results/phase1_2/neu_split_manifest_s42.json` (1,260 / 270 / 270), asserted in Colab. |
+| 2 | not_steel data | ⏳ Pending (code ready) | `scripts/build_not_steel.py`: COCO val2017 1,000 + DTD 600 (all 47 categories) + Places365 val 400 (fields / roads / buildings); ~50 % grayscale, ~50 % random crop to 200x200; 70/15/15 per source -> 1,400 / 300 / 300, zero overlap by id and content hash. URLs checked (HTTP 200) on 2026-11-21. |
+| 3 | Classifier v2 (7 classes) | ⏳ Pending | YOLOv8n-cls from `yolov8n-cls.pt`, imgsz 224, patience 20, seed 42; head reordered to NEU classes then `not_steel` (`scripts/reorder_cls_classes.py`). |
+| 4 | FP32 TFLite export | ⏳ Pending | `export_cls_tflite.py --num-classes 7 --precisions fp32 --allow-skip-int8`: output asserted `[1, 7]`, INT8 not attempted (recorded as skipped). |
+| 5 | Fusion RETAKE rule | ✅ Code done | `fusion.py`: not_steel top-1 with p >= `not_steel_threshold` -> "not a steel surface", alert False, no severity, decision RETAKE, detector ignored. Placeholder t_ns 0.50 until step 6. Unit tests in `tests/test_phase1_2.py`. |
+| 6 | Thresholds (val only) | ⏳ Pending | t_ns: most not_steel rejected with steel false rejection <= 1 %; classifier threshold 0.64 re-checked. |
+| 7 | Test report | ⏳ Pending | 7x7 confusion, steel fused accuracy with the Phase 1.1 detector (target ~270/270), not_steel rejection rate, steel false-rejection rate. |
 
 ### Phase 2 status: NEXT (not started)
 
@@ -259,3 +278,4 @@ Checklist for the Bharat AI-SoC Challenge submission. None of it is done yet.
 | 2026-11-08 | All | Student 3 | `PROJECT_CONTEXT.md`: Pipeline A in Section 1 and the Section 3 diagram now = detector YOLOv8n (TFLite FP32/INT8) + classifier YOLOv8n-cls (TFLite FP32) -> `fusion.py` (`FUSION_CONFIG`) -> `severity.py`, Pipeline B separate; documented from the code that the app's detector thresholds come from `FUSION_CONFIG` and `SEVERITY_CONFIG` min confidences apply only to the Phase 1 standalone path; new sections *Carried over to Phase 3* and *Before submission (23 Nov 2026)*; caveat that all 270 Phase 1.1 test images were in the Phase 1 val set used to tune the severity cutoffs; changelog sorted oldest first, authors renamed. |
 | 2026-11-08 | Phase 1 | Student 3 | Local offline demo: `phase1-vision/demo/` (`app.py` Gradio UI, `predict.py` CLI, shared `pipeline.py`), `requirements-demo.txt`, `tests/test_demo.py`, 12 TEST-split examples. TFLite only, via `tflite_utils.py`, `fusion.py` and `severity.py`, decoded at conf 0.05 / NMS 0.45 like the Phase 1.1 evaluation. On all 270 TEST images on Windows CPU it reproduces the committed results: fused 270/270 for both pipelines, same severity distributions, Review 0 (FP32) / 5 (INT8). Median invoke: detector 37 ms FP32 / 29 ms INT8, classifier 9 ms (laptop, not phone). |
 | 2026-11-20 | Phase 3 | Team | App name recorded: **AANetra** (A, A, N team initials + "netra" = eye), tagline "On-device steel defect inspection". AANetra is the Android app display name in Phase 3. |
+| 2026-11-21 | Phase 1.2 | Student 3 | Code for Phase 1.2 (no Colab run yet): 7th classifier class `not_steel`. `fusion.py`: not_steel RETAKE gate checked first (`not_steel_threshold` placeholder 0.50, `decision` field, `CLS7_CLASSES`, `classifier_classes`); `fusion_eval.py`: 7-class records, `retake` count, `choose_not_steel_threshold`; `export_cls_tflite.py --num-classes 7`, FP32-only export records INT8 as skipped; new `scripts/build_not_steel.py`, `scripts/reorder_cls_classes.py`, notebook `train_colab_phase1_2.ipynb`, `DATA_SOURCES.md`, NEU split manifest. `MODEL_IO.md` classifier v2 section (TODO values). Tests: 161 pass. |

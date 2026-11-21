@@ -30,6 +30,10 @@ NEU_CLASSES: List[str] = [
     "scratches",
 ]
 
+# Phase 1.2 classifier v2: the 6 NEU classes in the same order, then the reject class.
+NOT_STEEL = "not_steel"
+CLS7_CLASSES: List[str] = [*NEU_CLASSES, NOT_STEEL]
+
 
 # ----------------------------------------------------------------------------
 # Loading & inspection
