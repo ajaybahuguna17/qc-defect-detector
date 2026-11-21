@@ -185,6 +185,8 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
         adviceJob = viewModelScope.launch {
             try {
                 val advisory = advisor.advise(event)
+                // prompt / generated tokens, TTFT, total ms, cached (also in logcat, tag LlamaAdvisor)
+                ETLogging.getInstance().log("AANetra " + LlamaAdvisor.adviceLogLine(advisory))
                 if (_result.value?.event?.id == event.id) {
                     _advice.value = AdviceState.Done(advisory)
                 }

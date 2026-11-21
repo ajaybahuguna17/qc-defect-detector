@@ -64,8 +64,9 @@ object PromptBuilder {
         } ?: "N/A"
 
         val body =
+            // No "Alert:" line: advice is only generated for alerts (require above), so it was
+            // always "Alert: true" and repeated what "Defect:" already says.
             "INSPECTION:\n" +
-            "Alert: ${event.alert}\n" +
             "Defect: ${event.finalClass}\n" +
             "Severity: ${event.severityLevel ?: "N/A"}\n" +
             "Classifier confidence: $confidence\n" +

@@ -569,7 +569,7 @@ private fun AdviceCard(advice: AdviceState, onRetryAdvice: () -> Unit) {
                     AdviceSection("CAUSE", a.likelyCause)
                     AdviceSection("ACTION", a.recommendedAction)
                     val footer = if (a.cached) {
-                        "Cached advice"
+                        String.format(Locale.US, "Advice in %.1f s (cached)", a.llmMs / 1000f)
                     } else {
                         String.format(
                             Locale.US, "Advice in %.1f s  |  %.1f tokens/s",

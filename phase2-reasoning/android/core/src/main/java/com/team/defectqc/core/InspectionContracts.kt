@@ -63,7 +63,13 @@ data class Advisory(
     val llmMs: Long,
     val tokensPerSecond: Float,
     val cached: Boolean,
-    val rawResponse: String = ""
+    val rawResponse: String = "",
+    // Generation metrics (null when unknown, e.g. a cached or fake advisory).
+    val promptTokens: Int? = null,
+    val generatedTokens: Int? = null,
+    val ttftMs: Long? = null,
+    /** True when generation was stopped right after the ACTION line. */
+    val stoppedEarly: Boolean = false
 )
 
 interface Advisor {
