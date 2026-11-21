@@ -27,8 +27,8 @@ object VisionResultMapper {
             finalClass = result.finalClass,
             decidedBy = result.decidedBy,
 
-            classifierClass = result.classifier.className,
-            classifierConfidence = result.classifier.confidence,
+            classifierClass = result.classifier?.className,
+            classifierConfidence = result.classifier?.confidence,
 
             numBoxes = result.boxes.size,
             numFinalBoxes = finalBoxes.size,
@@ -51,7 +51,8 @@ object VisionResultMapper {
             },
 
             detectorMs = result.detectorMs,
-            classifierMs = result.classifierMs
+            classifierMs = result.classifierMs,
+            decision = result.decision
         )
     }
 }

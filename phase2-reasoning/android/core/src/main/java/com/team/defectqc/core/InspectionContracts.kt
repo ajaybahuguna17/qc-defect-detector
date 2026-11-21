@@ -42,7 +42,11 @@ data class DetectionEvent(
 
     val detectorMs: Long = 0L,
     val classifierMs: Long = 0L,
-    val lineId: String? = null
+    val lineId: String? = null,
+
+    // Gate decision from the vision pipeline: "RETAKE" (not steel / failed image check),
+    // "HOLD" (unsure), or null (decision follows from alert + severity). See QualityDecision.
+    val decision: String? = null
 )
 
 /**

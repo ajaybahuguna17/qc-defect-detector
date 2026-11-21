@@ -132,10 +132,15 @@ fun AANetraScreen(
             }
 
             result?.let {
-                DecisionCard(it)
-                ImageWithBoxes(it)
-                VisionDetailsCard(it)
-                AdviceCard(advice, onRetryAdvice)
+                if (it.decision.action == QualityAction.RETAKE) {
+                    RetakeCard(it, enabled = visionReady && !busy, onTakePhoto = onTakePhoto, onPickImage = onPickImage)
+                    ImageWithBoxes(it)
+                } else {
+                    DecisionCard(it)
+                    ImageWithBoxes(it)
+                    VisionDetailsCard(it)
+                    AdviceCard(advice, onRetryAdvice)
+                }
                 OutlinedButton(
                     onClick = onNewInspection,
                     enabled = !busy,
@@ -326,7 +331,74 @@ private fun actionColor(action: QualityAction, stopLine: Boolean): Color = when 
     action == QualityAction.PASS || action == QualityAction.ACCEPT -> Steel.Green
     action == QualityAction.REWORK -> Steel.Yellow
     action == QualityAction.REJECT -> Steel.SevOrange
+    action == QualityAction.RETAKE -> Steel.RetakeBlue
     else -> Steel.Grey
+}
+
+/** RETAKE: not a usable photo of a bare steel surface. No severity, no advice. */
+@Composable
+private fun RetakeCard(
+    r: InspectionViewModel.InspectionResult,
+    enabled: Boolean,
+    onTakePhoto: () -> Unit,
+    onPickImage: () -> Unit
+) {
+    SteelCard(borderColor = Steel.RetakeBlue) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("DECISION", style = MaterialTheme.typography.labelMedium, color = Steel.TextDim)
+            Text(
+                r.decision.label,
+                fontSize = 40.sp,
+                fontWeight = FontWeight.Black,
+                color = Steel.RetakeBlue,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                r.decision.explanation,
+                style = MaterialTheme.typography.titleMedium,
+                color = Steel.Text,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                r.event.reason,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Steel.TextDim,
+                textAlign = TextAlign.Center
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(
+                    onClick = onTakePhoto,
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Steel.RetakeBlue,
+                        contentColor = Color(0xFF0E1620),
+                        disabledContainerColor = Steel.Card,
+                        disabledContentColor = Steel.TextDim
+                    )
+                ) { Text("Take photo again", style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center) }
+                OutlinedButton(
+                    onClick = onPickImage,
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, Steel.RetakeBlue)
+                ) {
+                    Text(
+                        "Pick another image",
+                        color = Steel.RetakeBlue,
+                        style = MaterialTheme.typography.labelLarge,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -474,6 +546,7 @@ private fun AdviceCard(advice: AdviceState, onRetryAdvice: () -> Unit) {
             when (advice) {
                 AdviceState.None -> Unit
                 AdviceState.NoDefect -> Text("No defect - no advice needed", style = MaterialTheme.typography.bodyLarge)
+                is AdviceState.Skipped -> Text(advice.reason, style = MaterialTheme.typography.bodyLarge, color = Steel.TextDim)
                 is AdviceState.NotReady -> Text(advice.reason, style = MaterialTheme.typography.bodyLarge, color = Steel.TextDim)
                 is AdviceState.Generating -> {
                     var now by remember { mutableLongStateOf(android.os.SystemClock.elapsedRealtime()) }

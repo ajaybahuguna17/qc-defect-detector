@@ -25,9 +25,8 @@ class LiteRtModelSmokeTest(context: Context) {
         )
 
         try {
-            val classifier = loadModel(
-                "classifier/defect_cls_yolov8n_224_fp32.tflite"
-            )
+            val spec = readClassifierSpec(appContext)
+            val classifier = loadModel(spec.assetPath)
 
             try {
                 runZeroInput(detector)
@@ -49,7 +48,7 @@ class LiteRtModelSmokeTest(context: Context) {
                 check(detectorOutput == listOf(1, 10, 2100))
 
                 check(classifierInput == listOf(1, 3, 224, 224))
-                check(classifierOutput == listOf(1, 6))
+                check(classifierOutput == listOf(1, spec.numClasses))
 
                 return VisionModelSmokeResult(
                     detectorInputShape = detectorInput,

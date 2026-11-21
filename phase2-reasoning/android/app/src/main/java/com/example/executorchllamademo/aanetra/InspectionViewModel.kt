@@ -36,6 +36,8 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
     sealed interface AdviceState {
         data object None : AdviceState
         data object NoDefect : AdviceState
+        /** RETAKE or unsure HOLD: Llama is not called (see [needsAdvice]). */
+        data class Skipped(val reason: String) : AdviceState
         data class NotReady(val reason: String) : AdviceState
         data class Generating(val startedAtMs: Long) : AdviceState
         data class Done(val advisory: Advisory) : AdviceState
@@ -125,7 +127,7 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
 
     fun retryAdvice() {
         val current = _result.value ?: return
-        if (current.event.alert && _advice.value is AdviceState.Failed) requestAdvice(current.event)
+        if (needsAdvice(current.event) && _advice.value is AdviceState.Failed) requestAdvice(current.event)
     }
 
     fun inspect(uri: Uri) {
@@ -153,10 +155,14 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
                     InspectionResult(bitmap, event, QualityDecision.decide(event), visionMs)
                 }
                 _result.value = inspection
-                if (inspection.event.alert) {
-                    requestAdvice(inspection.event)
-                } else {
-                    _advice.value = AdviceState.NoDefect
+                val event = inspection.event
+                when {
+                    event.decision == QualityDecision.DECISION_RETAKE ->
+                        _advice.value = AdviceState.Skipped("No advice: retake the photo first.")
+                    event.decision != null ->
+                        _advice.value = AdviceState.Skipped("No AI advice for an unsure result: check the part manually.")
+                    event.alert -> requestAdvice(event)
+                    else -> _advice.value = AdviceState.NoDefect
                 }
             } catch (e: Throwable) {
                 Log.e(TAG, "Inspection failed", e)
@@ -168,6 +174,7 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun requestAdvice(event: DetectionEvent) {
+        if (!needsAdvice(event)) return   // never call Llama for RETAKE or unsure HOLD
         val state = ModelManager.state.value
         if (state !is ModelManager.State.Ready || ModelManager.module == null) {
             _advice.value = AdviceState.NotReady(notReadyReason(state))
@@ -269,6 +276,9 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
     companion object {
         private const val TAG = "AANetraInspect"
         private const val MAX_SIDE = 4096
+
+        /** Llama advice only for a defect alert without a gate decision (RETAKE / unsure HOLD). */
+        fun needsAdvice(event: DetectionEvent): Boolean = event.alert && event.decision == null
 
         fun percent(done: Long, total: Long): Int =
             if (total <= 0) 0 else ((done * 100) / total).toInt().coerceIn(0, 100)
