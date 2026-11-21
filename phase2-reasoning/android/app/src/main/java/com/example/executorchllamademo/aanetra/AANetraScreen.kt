@@ -364,7 +364,9 @@ private fun RetakeCard(
                 textAlign = TextAlign.Center
             )
             Text(
-                r.event.reason,
+                // Image-check RETAKE (decidedBy "image_check") keeps its own reason (too dark, blurry, ...);
+                // the classifier not_steel RETAKE gets operator guidance instead of the raw rule text.
+                if (r.event.decidedBy == "image_check") r.event.reason else NOT_STEEL_RETAKE_MESSAGE,
                 style = MaterialTheme.typography.bodyMedium,
                 color = Steel.TextDim,
                 textAlign = TextAlign.Center
@@ -606,3 +608,7 @@ private fun AdviceSection(title: String, body: String) {
         Text(body, style = MaterialTheme.typography.bodyLarge)
     }
 }
+
+private const val NOT_STEEL_RETAKE_MESSAGE =
+    "This photo doesn't match the steel-strip images AANetra is trained on. " +
+        "Please photograph a bare steel strip surface, close-up and evenly lit."
