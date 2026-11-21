@@ -33,6 +33,8 @@ object Steel {
     val SevOrange = Color(0xFFFF8A1F)
     val Red = Color(0xFFE53935)
     val Grey = Color(0xFF8A939B)
+    /** RETAKE (not a usable steel photo): grey-blue, neutral, not a part decision. */
+    val RetakeBlue = Color(0xFF7A9CB8)
 
     /** Vertical brushed-steel gradient: soft bands of slightly lighter/darker charcoal. */
     val backgroundBrush = Brush.verticalGradient(

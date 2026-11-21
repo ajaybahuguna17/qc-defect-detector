@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-Phase 1.1: export the TRAINED NEU-DET image classifier (YOLOv8n-cls) to TFLite FP32 and/or INT8.
+Phase 1.1 / 1.2: export the TRAINED NEU-DET image classifier (YOLOv8n-cls) to TFLite FP32 and/or INT8.
+
+  * --num-classes 6 (default, Phase 1.1): the 6 NEU classes.
+    --num-classes 7 (Phase 1.2, classifier v2): the 6 NEU classes in the same order, then "not_steel".
+    The checkpoint class list must match exactly and the TFLite output must be [1, num_classes].
 
 Strict, like export_tflite.py:
   * The weights must exist and be a 6-class classifier with the NEU class order. No fallback to
@@ -15,6 +19,8 @@ Strict, like export_tflite.py:
     (--timeout-min, default 15). FP32 failure or timeout is always a hard error. INT8 failure or
     timeout is a hard error UNLESS --allow-skip-int8 is given: then model_io.json records int8 as
     {"status": "skipped", "reason", "timestamp"} and a large warning is printed. Never silent.
+  * --precisions fp32 --allow-skip-int8 (no --reuse-existing): INT8 is NOT attempted at all (so it
+    cannot hang) and model_io.json records it as skipped ("not requested").
   * --reuse-existing: no export; check the .tflite files already in --out-dir and (re)write
     model_io.json from them. With --allow-skip-int8 --int8-skipped-reason "...", INT8 is recorded as
     skipped with that reason (used to resume the 2026-11-07 Colab run, whose INT8 calibration hung).
@@ -42,7 +48,7 @@ from typing import Dict, List, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from tflite_utils import (  # noqa: E402
-    NEU_CLASSES, assert_classifier_model, describe_cls_io, load_interpreter, run_cls_tflite,
+    CLS7_CLASSES, NEU_CLASSES, assert_classifier_model, describe_cls_io, load_interpreter, run_cls_tflite,
 )
 from export_child import (  # noqa: E402
     DEFAULT_TIMEOUT_MIN, print_skip_warning, resolve_outcome, run_export, skipped_entry,
@@ -50,6 +56,8 @@ from export_child import (  # noqa: E402
 
 PHASE1_DIR = Path(__file__).resolve().parents[1]
 IMG_EXT = {".jpg", ".jpeg", ".png", ".bmp"}
+CLASS_LISTS = {6: NEU_CLASSES, 7: CLS7_CLASSES}
+INT8_NOT_REQUESTED = "INT8 not requested (--precisions fp32 --allow-skip-int8); FP32 only"
 
 
 def tflite_name(imgsz: int, prec: str) -> str:
@@ -119,6 +127,8 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     ap.add_argument("--weights", required=True, help="trained classifier checkpoint (best.pt)")
     ap.add_argument("--data", required=True, help="ImageFolder root from build_cls_dataset.py (train/ is used)")
     ap.add_argument("--imgsz", type=int, default=224)
+    ap.add_argument("--num-classes", type=int, choices=sorted(CLASS_LISTS), default=6,
+                    help="6 = NEU classes (Phase 1.1); 7 = NEU classes + not_steel (Phase 1.2)")
     ap.add_argument("--out-dir", default=str(PHASE1_DIR / "models" / "exported" / "classifier"))
     ap.add_argument("--precisions", default="fp32,int8", help="comma list of fp32,int8 (fp32 required)")
     ap.add_argument("--calib-fraction", type=float, default=0.3, help="fraction of train used for INT8 calibration")
@@ -166,8 +176,9 @@ def main(argv: Optional[List[str]] = None) -> Dict:
     if m.task != "classify":
         raise AssertionError(f"{weights} is a '{m.task}' model, not a classifier")
     class_list = [m.names[i] for i in sorted(m.names)]
-    if class_list != NEU_CLASSES:
-        raise AssertionError(f"checkpoint classes {class_list} != expected NEU-DET classes {NEU_CLASSES}")
+    expected = CLASS_LISTS[args.num_classes]
+    if class_list != expected:
+        raise AssertionError(f"checkpoint classes {class_list} != expected {args.num_classes}-class list {expected}")
 
     probe = next((p for p in sorted((cls_root / "train" / NEU_CLASSES[0]).iterdir()) if p.suffix.lower() in IMG_EXT), None)
     if probe is None:
@@ -176,6 +187,7 @@ def main(argv: Optional[List[str]] = None) -> Dict:
     out_dir = Path(args.out_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
     report = {"task": "classify", "weights": str(weights), "imgsz": args.imgsz, "classes": class_list,
+              "num_classes": len(class_list),
               "preprocessing": describe_transforms(weights, args.imgsz), "models": {}}
 
     if args.reuse_existing:
@@ -212,6 +224,9 @@ def main(argv: Optional[List[str]] = None) -> Dict:
             if prec == "int8":
                 report["models"][prec]["calibration"] = {"split": "train", "fraction": args.calib_fraction}
         shutil.rmtree(work)
+        if "int8" not in precisions and args.allow_skip_int8:
+            print_skip_warning("classifier", "int8", INT8_NOT_REQUESTED)
+            report["models"]["int8"] = skipped_entry(INT8_NOT_REQUESTED)
 
     (out_dir / "labels.txt").write_text("\n".join(class_list) + "\n", encoding="utf-8")
     (out_dir / "model_io.json").write_text(json.dumps(report, indent=2), encoding="utf-8")

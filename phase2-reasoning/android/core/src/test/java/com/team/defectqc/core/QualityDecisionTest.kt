@@ -88,4 +88,54 @@ class QualityDecisionTest {
         )
         assertEquals(QualityAction.REJECT, QualityDecision.decide(event).action)
     }
+
+    // ---- Phase 1.2 gate decisions ----
+
+    private fun event(alert: Boolean, severity: String?, decision: String?) = DetectionEvent(
+        id = "e2", timestampEpochMs = 0L, imageName = "img.jpg", detector = "fp32",
+        alert = alert, finalClass = "x", decidedBy = "classifier", classifierClass = null,
+        classifierConfidence = null, numBoxes = 0, numFinalBoxes = 0, largestAreaPct = null,
+        severityLevel = severity, reason = "r", boxes = emptyList(), decision = decision
+    )
+
+    @Test
+    fun retakeDecision() {
+        val d = QualityDecision.decide(false, null, "RETAKE")
+        assertEquals(QualityAction.RETAKE, d.action)
+        assertFalse(d.stopLine)
+        assertEquals("RETAKE", d.label)
+        assertEquals("Not a bare steel surface - retake photo", d.explanation)
+    }
+
+    @Test
+    fun retakeOverridesSeverity() {
+        assertEquals(QualityAction.RETAKE, QualityDecision.decide(true, "Critical", "RETAKE").action)
+        assertEquals(QualityAction.RETAKE, QualityDecision.decide(event(false, null, "RETAKE")).action)
+    }
+
+    @Test
+    fun unsureHoldOverridesSeverity() {
+        val d = QualityDecision.decide(event(true, "Critical", "HOLD"))
+        assertEquals(QualityAction.HOLD, d.action)
+        assertFalse(d.stopLine)
+        assertEquals("Unsure - manual check", d.explanation)
+    }
+
+    @Test
+    fun reviewHoldUnchanged() {
+        val d = QualityDecision.decide(true, "Review")
+        assertEquals(QualityAction.HOLD, d.action)
+        assertEquals("Hold the part for a manual check.", d.explanation)
+    }
+
+    @Test
+    fun noDecisionKeepsOldMapping() {
+        assertEquals(QualityAction.PASS, QualityDecision.decide(event(false, null, null)).action)
+        assertEquals(QualityAction.REWORK, QualityDecision.decide(event(true, "Medium", null)).action)
+    }
+
+    @Test
+    fun unknownDecisionIsHold() {
+        assertEquals(QualityAction.HOLD, QualityDecision.decide(false, null, "MAYBE").action)
+    }
 }

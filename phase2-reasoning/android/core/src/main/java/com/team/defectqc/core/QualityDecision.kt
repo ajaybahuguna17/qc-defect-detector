@@ -11,7 +11,10 @@ enum class QualityAction {
     ACCEPT,
     REWORK,
     REJECT,
-    HOLD
+    HOLD,
+
+    /** Not a usable photo of a bare steel surface: take the photo again. No part decision. */
+    RETAKE
 }
 
 data class QualityDecision(
@@ -25,13 +28,30 @@ data class QualityDecision(
 
     companion object {
 
+        /** Gate decisions from the vision pipeline ([DetectionEvent.decision]). */
+        const val DECISION_RETAKE = "RETAKE"
+        const val DECISION_HOLD = "HOLD"
+
+        const val RETAKE_EXPLANATION = "Not a bare steel surface - retake photo"
+        const val UNSURE_EXPLANATION = "Unsure - manual check"
+
         /**
          * Deterministic mapping:
-         * no defect -> PASS, Low -> ACCEPT, Medium -> REWORK,
+         * gate decision RETAKE -> RETAKE, gate decision HOLD (unsure) -> HOLD "Unsure - manual check";
+         * otherwise no defect -> PASS, Low -> ACCEPT, Medium -> REWORK,
          * High -> REJECT, Critical -> REJECT + STOP LINE,
          * Review (or any unknown severity) -> HOLD for manual check.
          */
-        fun decide(alert: Boolean, severityLevel: String?): QualityDecision {
+        fun decide(alert: Boolean, severityLevel: String?, decision: String? = null): QualityDecision {
+            when (decision?.trim()?.uppercase()) {
+                DECISION_RETAKE -> return QualityDecision(QualityAction.RETAKE, false, RETAKE_EXPLANATION)
+                DECISION_HOLD -> return QualityDecision(QualityAction.HOLD, false, UNSURE_EXPLANATION)
+                null, "" -> Unit
+                else -> return QualityDecision(
+                    QualityAction.HOLD, false, "Hold the part for a manual check (unknown decision '$decision')."
+                )
+            }
+
             if (!alert) {
                 return QualityDecision(QualityAction.PASS, false, "No defect found.")
             }
@@ -56,6 +76,6 @@ data class QualityDecision(
         }
 
         fun decide(event: DetectionEvent): QualityDecision =
-            decide(event.alert, event.severityLevel)
+            decide(event.alert, event.severityLevel, event.decision)
     }
 }

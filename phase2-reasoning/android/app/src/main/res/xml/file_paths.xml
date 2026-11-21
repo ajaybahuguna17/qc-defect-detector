@@ -2,4 +2,6 @@
 <paths>
     <!-- Photos taken with "Take photo" are written here (app cache, not shared storage). -->
     <cache-path name="camera" path="camera/" />
+    <!-- Inspection log CSV exports ("Export CSV" in History), shared via the share sheet. -->
+    <cache-path name="exports" path="exports/" />
 </paths>

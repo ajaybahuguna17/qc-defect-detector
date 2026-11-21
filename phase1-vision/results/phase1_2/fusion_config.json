@@ -1,0 +1,34 @@
+{
+  "selected_on": "val",
+  "run_name": "p12_cls7_notsteel_s42",
+  "git_commit": "864ea7f9e8806a40040e717300f8e6973a2f049d",
+  "not_steel_threshold": 0.33,
+  "max_false_reject": 0.01,
+  "cls_threshold": 0.64,
+  "cls_threshold_phase1_1": 0.64,
+  "cls_threshold_recheck": {
+    "val_correct_at_0.64": 538,
+    "val_best": 538,
+    "plateau_centre": 0.63
+  },
+  "det_class_min_confidence": {
+    "crazing": 0.1,
+    "inclusion": 0.5,
+    "patches": 0.55,
+    "pitted_surface": 0.15,
+    "rolled-in_scale": 0.15,
+    "scratches": 0.3
+  },
+  "det_min_confidence": 0.5,
+  "det_thresholds_source": "Phase 1.1 p11_split701515_det320_cls224_s42 (detector unchanged)",
+  "classifier_classes": [
+    "crazing",
+    "inclusion",
+    "patches",
+    "pitted_surface",
+    "rolled-in_scale",
+    "scratches",
+    "not_steel"
+  ],
+  "rule": "fusion.py: not_steel gate first; fusion_eval.choose_not_steel_threshold / choose_cls_threshold"
+}

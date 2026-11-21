@@ -1,7 +1,14 @@
 """
 Phase 1.1: threshold selection (VAL only) and image-level evaluation of the fusion rule.
 
-Pure Python (no numpy), deterministic. Used by notebooks/train_colab_phase1_1.ipynb.
+Pure Python (no numpy), deterministic. Used by notebooks/train_colab_phase1_1.ipynb and
+notebooks/train_colab_phase1_2.ipynb.
+
+Phase 1.2: ``probs`` may have 7 values (classifier v2, 7th = not_steel); the class list is taken
+from ``fusion.classifier_classes``. A record whose ``true_class`` is ``not_steel`` is correct when
+the fused answer is ``config["not_steel_label"]`` (RETAKE). ``choose_not_steel_threshold`` picks
+t_ns on VAL: the largest not_steel rejection with steel false rejection <= ``max_false_reject``
+(plateau centre on ties).
 
 A *record* is one image with the raw outputs of one detector + one classifier:
 
@@ -32,10 +39,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Sequence
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from fusion import FUSION_CONFIG, NEU_CLASSES, classifier_top1, fuse  # noqa: E402
+from fusion import FUSION_CONFIG, NEU_CLASSES, classifier_classes, classifier_top1, fuse  # noqa: E402
 
 DET_GRID: List[float] = [round(0.05 * k, 2) for k in range(1, 20)]      # 0.05 .. 0.95
 CLS_GRID: List[float] = [round(0.01 * k, 2) for k in range(30, 100)]    # 0.30 .. 0.99
+NS_GRID: List[float] = [round(0.01 * k, 2) for k in range(30, 100)]     # 0.30 .. 0.99
 
 
 def pick_plateau_centre(grid: Sequence[float], scores: Sequence[float]) -> float:
@@ -94,17 +102,26 @@ def evaluate(records: Sequence[Mapping[str, Any]], config: Mapping[str, Any],
              use_classifier: bool = True) -> Dict[str, Any]:
     """Fused image-level accuracy, overall and per class, plus how each image was decided."""
     classes = list(config["classes"])
+    ns_class = config["not_steel_class"]
     per = {c: {"images": 0, "correct": 0} for c in classes}
     sources = {"classifier": 0, "detector": 0, "none": 0}
+    retake = 0
     levels: Dict[str, int] = {}
     confusion = {c: {} for c in classes}          # true -> predicted -> count
     errors = []
     for r in sorted(records, key=lambda x: x["image"]):
-        clf = classifier_top1(r["probs"], classes) if use_classifier else None
+        clf = (classifier_top1(r["probs"], classifier_classes(config, len(r["probs"])))
+               if use_classifier else None)
         res = fuse(r["detections"], clf, r["width"], r["height"], config)
         t = r["true_class"]
+        if t not in per:
+            if t != ns_class:
+                raise ValueError(f"record {r['image']}: unknown true_class {t!r}")
+            per[t] = {"images": 0, "correct": 0}
+            confusion[t] = {}
         per[t]["images"] += 1
-        ok = res.final_class == t
+        retake += int(res.decision == config["retake_decision"])
+        ok = res.final_class == (config["not_steel_label"] if t == ns_class else t)
         per[t]["correct"] += int(ok)
         sources[res.source] += 1
         levels[str(res.severity_level)] = levels.get(str(res.severity_level), 0) + 1
@@ -118,7 +135,7 @@ def evaluate(records: Sequence[Mapping[str, Any]], config: Mapping[str, Any],
     k = sum(v["correct"] for v in per.values())
     return {"images": n, "correct": k, "accuracy": round(k / n, 4) if n else None,
             "alerts": n - sources["none"], "decided_by": sources, "severity_levels": levels,
-            "review": levels.get(str(config["review_level"]), 0),
+            "review": levels.get(str(config["review_level"]), 0), "retake": retake,
             "per_class": per, "confusion": confusion, "errors": errors}
 
 
@@ -146,3 +163,35 @@ def classifier_only_accuracy(records: Sequence[Mapping[str, Any]], classes: Sequ
     n =sum(v["images"] for v in per.values())
     k = sum(v["correct"] for v in per.values())
     return {"images": n, "correct": k, "accuracy": round(k / n, 4) if n else None, "per_class": per}
+
+
+def not_steel_rejected(probs: Sequence[float], threshold: float, config: Mapping[str, Any] = FUSION_CONFIG) -> bool:
+    """True when the fusion gate would reject: top-1 is not_steel with p >= threshold."""
+    top = classifier_top1(probs, classifier_classes(config, len(probs)))
+    return top["class_name"] == config["not_steel_class"] and top["confidence"] >= threshold
+
+
+def choose_not_steel_threshold(steel_prob_sets: Sequence[Sequence[Sequence[float]]],
+                               not_steel_prob_sets: Sequence[Sequence[Sequence[float]]],
+                               max_false_reject: float = 0.01, grid: Sequence[float] = NS_GRID,
+                               config: Mapping[str, Any] = FUSION_CONFIG) -> Dict[str, Any]:
+    """t_ns on VAL: maximise not_steel images rejected subject to steel false rejection <= max_false_reject
+    (summed over the given prob sets, e.g. FP32 TFLite + .pt). Ties -> plateau centre."""
+    n_steel = sum(len(s) for s in steel_prob_sets)
+    n_ns = sum(len(s) for s in not_steel_prob_sets)
+    if not n_steel or not n_ns:
+        raise ValueError("need steel and not_steel val images")
+    rows = []
+    for t in grid:
+        fr = sum(not_steel_rejected(p, t, config) for s in steel_prob_sets for p in s)
+        rj = sum(not_steel_rejected(p, t, config) for s in not_steel_prob_sets for p in s)
+        rows.append({"threshold": t, "steel_false_rejects": fr, "steel_images": n_steel,
+                     "steel_false_reject_rate": round(fr / n_steel, 4),
+                     "not_steel_rejected": rj, "not_steel_images": n_ns,
+                     "not_steel_rejection_rate": round(rj / n_ns, 4),
+                     "feasible": fr / n_steel <= max_false_reject})
+    if not any(r["feasible"] for r in rows):
+        raise RuntimeError(f"no threshold in the grid keeps steel false rejection <= {max_false_reject:.1%}")
+    scores = [r["not_steel_rejected"] if r["feasible"] else -1 for r in rows]
+    chosen = pick_plateau_centre([r["threshold"] for r in rows], scores)
+    return {"threshold": chosen, "max_false_reject": max_false_reject, "sweep": rows}

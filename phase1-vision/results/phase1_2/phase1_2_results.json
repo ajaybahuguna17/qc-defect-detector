@@ -1,0 +1,2828 @@
+{
+  "generated_utc": "2026-11-21T06:13:19+00:00",
+  "git_commit": "864ea7f9e8806a40040e717300f8e6973a2f049d",
+  "branch": "feature/not-steel-class",
+  "gpu": "Tesla T4",
+  "versions": {
+    "ultralytics": "8.4.198",
+    "litert-torch": "0.10.0",
+    "ai-edge-litert": "2.3.0",
+    "torch": "2.14.1+cu130",
+    "torchvision": "0.29.1+cu130",
+    "numpy": "2.4.6",
+    "opencv-python": "5.0.0.93",
+    "opencv-python-headless": "5.0.0.93",
+    "pillow": "11.3.0",
+    "matplotlib": "3.10.0",
+    "python": "3.13.16",
+    "cuda": "13.0",
+    "platform": "Linux-6.6.159+-x86_64-with-glibc2.39"
+  },
+  "run_name": "p12_cls7_notsteel_s42",
+  "config": {
+    "seed": 42,
+    "split": "70/15/15",
+    "detector": "Phase 1.1 p11_split701515_det320_cls224_s42, unchanged",
+    "classifier": {
+      "base": "yolov8n-cls.pt (ImageNet)",
+      "classes": [
+        "crazing",
+        "inclusion",
+        "patches",
+        "pitted_surface",
+        "rolled-in_scale",
+        "scratches",
+        "not_steel"
+      ],
+      "imgsz": 224,
+      "epochs": 100,
+      "patience": 20,
+      "batch": 64
+    },
+    "not_steel": {
+      "n_coco": 1000,
+      "n_dtd": 600,
+      "n_places": 400,
+      "gray_frac": 0.5,
+      "crop_frac": 0.5
+    },
+    "max_false_reject": 0.01,
+    "sweep_decode": {
+      "base_conf": 0.05,
+      "nms_iou": 0.45
+    }
+  },
+  "data_sources": {
+    "coco_val2017": {
+      "url": "http://images.cocodataset.org/zips/val2017.zip",
+      "licence": "COCO terms of use; images: Flickr, per-image Creative Commons licences; annotations (not used) CC BY 4.0",
+      "file": "val2017.zip",
+      "size_bytes": 815585330,
+      "sha256": "4f7e2ccb2866ec5041993c9cf2a952bbed69647b115d0f74da7ce8f4bef82f05"
+    },
+    "dtd": {
+      "url": "https://thor.robots.ox.ac.uk/dtd/dtd-r1.0.1.tar.gz",
+      "licence": "DTD: research purposes only (Cimpoi et al., CVPR 2014)",
+      "file": "dtd-r1.0.1.tar.gz",
+      "size_bytes": 625239812,
+      "sha256": "e42855a52a4950a3b59612834602aa253914755c95b0cff9ead6d07395f8e205"
+    },
+    "places365_val_256": {
+      "url": "https://data.csail.mit.edu/places/places365/val_256.tar",
+      "licence": "Places365: non-commercial research and educational purposes only (Zhou et al., TPAMI 2017)",
+      "file": "val_256.tar",
+      "size_bytes": 525158400,
+      "sha256": "24b4e639ef12a0012af525bc4cb443e4ab4aaea8369a1fb009b70e4a4aad5d48"
+    },
+    "places365_filelist": {
+      "url": "https://data.csail.mit.edu/places/places365/filelist_places365-standard.tar",
+      "licence": "Places365 (as above)",
+      "file": "filelist_places365-standard.tar",
+      "size_bytes": 67498496,
+      "sha256": "520699e00d69b63ddc29fac54645aa00ce1c10ca42e288960aa1cf791d6e9aa9"
+    }
+  },
+  "dataset": {
+    "split": "70/15/15",
+    "seed": 42,
+    "counts": {
+      "train": {
+        "crazing": 210,
+        "inclusion": 210,
+        "patches": 210,
+        "pitted_surface": 210,
+        "rolled-in_scale": 210,
+        "scratches": 210,
+        "not_steel": 1400
+      },
+      "val": {
+        "crazing": 45,
+        "inclusion": 45,
+        "patches": 45,
+        "pitted_surface": 45,
+        "rolled-in_scale": 45,
+        "scratches": 45,
+        "not_steel": 300
+      },
+      "test": {
+        "crazing": 45,
+        "inclusion": 45,
+        "patches": 45,
+        "pitted_surface": 45,
+        "rolled-in_scale": 45,
+        "scratches": 45,
+        "not_steel": 300
+      }
+    },
+    "steel_split_identical_to_phase1_1": true,
+    "not_steel": {
+      "seed": 42,
+      "gray_frac": 0.5,
+      "crop_frac": 0.5,
+      "out_size": 200,
+      "split_ratios": [
+        0.7,
+        0.15,
+        0.15
+      ],
+      "counts": {
+        "train": {
+          "coco": 700,
+          "dtd": 420,
+          "places365": 280
+        },
+        "val": {
+          "coco": 150,
+          "dtd": 90,
+          "places365": 60
+        },
+        "test": {
+          "coco": 150,
+          "dtd": 90,
+          "places365": 60
+        }
+      },
+      "totals": {
+        "train": 1400,
+        "val": 300,
+        "test": 300
+      },
+      "grayscale": 952,
+      "cropped_200": 1053,
+      "pairwise_overlap": 0,
+      "duplicate_content_across_splits": 0,
+      "dtd_categories": 47,
+      "places_categories": 84
+    },
+    "pairwise_overlap": 0
+  },
+  "training": {
+    "classifier_minutes": 17.1,
+    "classifier_epochs_completed": 53,
+    "reorder": {
+      "src": "/content/work12/runs/p12_cls7_notsteel_s42_cls/weights/best.pt",
+      "dst": "/content/work12/cls7_ordered/best_p12_cls7_notsteel_s42_classifier.pt",
+      "before": [
+        "crazing",
+        "inclusion",
+        "not_steel",
+        "patches",
+        "pitted_surface",
+        "rolled-in_scale",
+        "scratches"
+      ],
+      "after": [
+        "crazing",
+        "inclusion",
+        "patches",
+        "pitted_surface",
+        "rolled-in_scale",
+        "scratches",
+        "not_steel"
+      ],
+      "perm": [
+        0,
+        1,
+        3,
+        4,
+        5,
+        6,
+        2
+      ],
+      "models": [
+        "model"
+      ],
+      "check": {
+        "images": 20,
+        "max_abs_prob_diff": 2.384185791015625e-07
+      }
+    }
+  },
+  "pipelines": {
+    "pt": {
+      "det": "pt",
+      "cls": "pt",
+      "label": ".pt pipeline: detector .pt + classifier v2 .pt"
+    },
+    "fp32": {
+      "det": "fp32",
+      "cls": "fp32",
+      "label": "FP32 pipeline: detector FP32 + classifier v2 FP32"
+    },
+    "int8": {
+      "det": "int8",
+      "cls": "fp32",
+      "label": "INT8 pipeline: detector INT8 + classifier v2 FP32"
+    }
+  },
+  "model_io": {
+    "detector": {
+      "weights": "/content/work11/runs/p11_split701515_det320_cls224_s42_det/weights/best.pt",
+      "imgsz": 320,
+      "classes": [
+        "crazing",
+        "inclusion",
+        "patches",
+        "pitted_surface",
+        "rolled-in_scale",
+        "scratches"
+      ],
+      "models": {
+        "fp32": {
+          "input_shape": [
+            1,
+            3,
+            320,
+            320
+          ],
+          "input_dtype": "float32",
+          "input_layout": "NCHW",
+          "input_hw": [
+            320,
+            320
+          ],
+          "input_quant": [
+            0.0,
+            0
+          ],
+          "output_shape": [
+            1,
+            10,
+            2100
+          ],
+          "output_dtype": "float32",
+          "output_quant": [
+            0.0,
+            0
+          ],
+          "num_classes": 6,
+          "num_anchors": 2100,
+          "file": "defect_yolov8n_320_fp32.tflite",
+          "size_bytes": 12693227
+        },
+        "int8": {
+          "input_shape": [
+            1,
+            3,
+            320,
+            320
+          ],
+          "input_dtype": "float32",
+          "input_layout": "NCHW",
+          "input_hw": [
+            320,
+            320
+          ],
+          "input_quant": [
+            0.0,
+            0
+          ],
+          "output_shape": [
+            1,
+            10,
+            2100
+          ],
+          "output_dtype": "float32",
+          "output_quant": [
+            0.0,
+            0
+          ],
+          "num_classes": 6,
+          "num_anchors": 2100,
+          "file": "defect_yolov8n_320_int8.tflite",
+          "size_bytes": 3441424,
+          "calibration": {
+            "split": "train",
+            "fraction": 0.3
+          }
+        }
+      }
+    },
+    "classifier": {
+      "task": "classify",
+      "weights": "/content/work12/cls7_ordered/best_p12_cls7_notsteel_s42_classifier.pt",
+      "imgsz": 224,
+      "classes": [
+        "crazing",
+        "inclusion",
+        "patches",
+        "pitted_surface",
+        "rolled-in_scale",
+        "scratches",
+        "not_steel"
+      ],
+      "num_classes": 7,
+      "preprocessing": {
+        "checkpoint_transforms": "Compose(\n    Resize(size=224, interpolation=bilinear, max_size=None, antialias=True)\n    CenterCrop(size=(224, 224))\n    ToTensor()\n    Normalize(mean=tensor([0., 0., 0.]), std=tensor([1., 1., 1.]))\n)",
+        "colour_order": "RGB",
+        "resize": "shorter side -> 224 (bilinear), centre crop 224x224",
+        "scale": "pixel / 255.0 -> 0..1",
+        "mean": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "std": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "reference_code": "phase1-vision/scripts/tflite_utils.py: cls_preprocess + cls_input_tensor"
+      },
+      "models": {
+        "fp32": {
+          "input_shape": [
+            1,
+            3,
+            224,
+            224
+          ],
+          "input_dtype": "float32",
+          "input_layout": "NCHW",
+          "input_hw": [
+            224,
+            224
+          ],
+          "input_quant": [
+            0.0,
+            0
+          ],
+          "output_shape": [
+            1,
+            7
+          ],
+          "output_dtype": "float32",
+          "output_quant": [
+            0.0,
+            0
+          ],
+          "num_classes": 7,
+          "status": "ok",
+          "file": "defect_cls_yolov8n_224_fp32.tflite",
+          "size_bytes": 5821038,
+          "sha256": "550f47cd82f6616d6ba3dd9c79c96700122f476aa0445ec4cdc06bf446a6723e",
+          "output_is_softmax": true,
+          "probe": {
+            "image": "crazing_1.jpg",
+            "probs": [
+              1.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "export_seconds": 20.3
+        },
+        "int8": {
+          "status": "skipped",
+          "reason": "INT8 not requested (--precisions fp32 --allow-skip-int8); FP32 only",
+          "timestamp": "2026-11-21T06:10:01+00:00"
+        }
+      }
+    }
+  },
+  "classifier_preprocessing_parity_max_abs_prob_diff": 6.496906280517578e-06,
+  "threshold_selection_val": {
+    "not_steel": {
+      "threshold": 0.33,
+      "max_false_reject": 0.01,
+      "sweep": [
+        {
+          "threshold": 0.3,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 300,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 1.0,
+          "feasible": true
+        },
+        {
+          "threshold": 0.31,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 300,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 1.0,
+          "feasible": true
+        },
+        {
+          "threshold": 0.32,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 300,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 1.0,
+          "feasible": true
+        },
+        {
+          "threshold": 0.33,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 300,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 1.0,
+          "feasible": true
+        },
+        {
+          "threshold": 0.34,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 300,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 1.0,
+          "feasible": true
+        },
+        {
+          "threshold": 0.35,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 300,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 1.0,
+          "feasible": true
+        },
+        {
+          "threshold": 0.36,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 300,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 1.0,
+          "feasible": true
+        },
+        {
+          "threshold": 0.37,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 300,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 1.0,
+          "feasible": true
+        },
+        {
+          "threshold": 0.38,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.39,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.4,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.41,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.42,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.43,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.44,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.45,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.46,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.47,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.48,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.49,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.5,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.51,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.52,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.53,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.54,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.55,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.56,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.57,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.58,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.59,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.6,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 299,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9967,
+          "feasible": true
+        },
+        {
+          "threshold": 0.61,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 298,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9933,
+          "feasible": true
+        },
+        {
+          "threshold": 0.62,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 298,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9933,
+          "feasible": true
+        },
+        {
+          "threshold": 0.63,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.64,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.65,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.66,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.67,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.68,
+          "steel_false_rejects": 1,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0037,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.69,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.7,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.71,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.72,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.73,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.74,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.75,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.76,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.77,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.78,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.79,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.8,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.81,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.82,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.83,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.84,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.85,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.86,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.87,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.88,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.89,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.9,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.91,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.92,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.93,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.94,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.95,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.96,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.97,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.98,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 297,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.99,
+          "feasible": true
+        },
+        {
+          "threshold": 0.99,
+          "steel_false_rejects": 0,
+          "steel_images": 270,
+          "steel_false_reject_rate": 0.0,
+          "not_steel_rejected": 296,
+          "not_steel_images": 300,
+          "not_steel_rejection_rate": 0.9867,
+          "feasible": true
+        }
+      ]
+    },
+    "classifier": {
+      "threshold": 0.63,
+      "sweep": [
+        {
+          "threshold": 0.3,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.31,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.32,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.33,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.34,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.35,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.36,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.37,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.38,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.39,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.4,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.41,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.42,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.43,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.44,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.45,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.46,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.47,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.48,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.49,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.5,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.51,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.52,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.53,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.54,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.55,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.56,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.57,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.58,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.59,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.6,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.61,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.62,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.63,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.64,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.65,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.66,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.67,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.68,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.69,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.7,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.71,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.72,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.73,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.74,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.75,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.76,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.77,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.78,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.79,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.8,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.81,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.82,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.83,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.84,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.85,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.86,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.87,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.88,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.89,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.9,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.91,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.92,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.93,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.94,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.95,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.96,
+          "correct": 538,
+          "review": 5
+        },
+        {
+          "threshold": 0.97,
+          "correct": 536,
+          "review": 3
+        },
+        {
+          "threshold": 0.98,
+          "correct": 536,
+          "review": 3
+        },
+        {
+          "threshold": 0.99,
+          "correct": 536,
+          "review": 3
+        }
+      ]
+    },
+    "fusion_config": {
+      "selected_on": "val",
+      "run_name": "p12_cls7_notsteel_s42",
+      "git_commit": "864ea7f9e8806a40040e717300f8e6973a2f049d",
+      "not_steel_threshold": 0.33,
+      "max_false_reject": 0.01,
+      "cls_threshold": 0.64,
+      "cls_threshold_phase1_1": 0.64,
+      "cls_threshold_recheck": {
+        "val_correct_at_0.64": 538,
+        "val_best": 538,
+        "plateau_centre": 0.63
+      },
+      "det_class_min_confidence": {
+        "crazing": 0.1,
+        "inclusion": 0.5,
+        "patches": 0.55,
+        "pitted_surface": 0.15,
+        "rolled-in_scale": 0.15,
+        "scratches": 0.3
+      },
+      "det_min_confidence": 0.5,
+      "det_thresholds_source": "Phase 1.1 p11_split701515_det320_cls224_s42 (detector unchanged)",
+      "classifier_classes": [
+        "crazing",
+        "inclusion",
+        "patches",
+        "pitted_surface",
+        "rolled-in_scale",
+        "scratches",
+        "not_steel"
+      ],
+      "rule": "fusion.py: not_steel gate first; fusion_eval.choose_not_steel_threshold / choose_cls_threshold"
+    },
+    "val": {
+      "pt": {
+        "steel": {
+          "images": 270,
+          "correct": 269,
+          "accuracy": 0.9963,
+          "alerts": 270,
+          "decided_by": {
+            "classifier": 269,
+            "detector": 1,
+            "none": 0
+          },
+          "severity_levels": {
+            "Critical": 114,
+            "Low": 16,
+            "High": 84,
+            "Medium": 54,
+            "Review": 1,
+            "None": 1
+          },
+          "review": 1,
+          "retake": 1,
+          "per_class": {
+            "crazing": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "inclusion": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "patches": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "pitted_surface": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "rolled-in_scale": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "scratches": {
+              "images": 45,
+              "correct": 44,
+              "accuracy": 0.9778
+            }
+          },
+          "confusion": {
+            "crazing": {
+              "crazing": 45
+            },
+            "inclusion": {
+              "inclusion": 45
+            },
+            "patches": {
+              "patches": 45
+            },
+            "pitted_surface": {
+              "pitted_surface": 45
+            },
+            "rolled-in_scale": {
+              "rolled-in_scale": 45
+            },
+            "scratches": {
+              "scratches": 44,
+              "not a steel surface": 1
+            }
+          },
+          "errors": [
+            {
+              "image": "scratches_74.jpg",
+              "true_class": "scratches",
+              "final_class": "not a steel surface",
+              "source": "classifier",
+              "classifier": {
+                "class_name": "not_steel",
+                "class_id": 6,
+                "confidence": 0.6884034872055054
+              },
+              "reason": "classifier not_steel 0.688 >= 0.33: not a steel surface, 2 kept detection(s) ignored -> RETAKE"
+            }
+          ]
+        },
+        "not_steel": {
+          "images": 300,
+          "correct": 300,
+          "accuracy": 1.0,
+          "alerts": 300,
+          "decided_by": {
+            "classifier": 300,
+            "detector": 0,
+            "none": 0
+          },
+          "severity_levels": {
+            "None": 300
+          },
+          "review": 0,
+          "retake": 300,
+          "per_class": {
+            "crazing": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "inclusion": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "patches": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "pitted_surface": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "rolled-in_scale": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "scratches": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "not_steel": {
+              "images": 300,
+              "correct": 300,
+              "accuracy": 1.0
+            }
+          },
+          "confusion": {
+            "crazing": {},
+            "inclusion": {},
+            "patches": {},
+            "pitted_surface": {},
+            "rolled-in_scale": {},
+            "scratches": {},
+            "not_steel": {
+              "not a steel surface": 300
+            }
+          },
+          "errors": []
+        }
+      },
+      "fp32": {
+        "steel": {
+          "images": 270,
+          "correct": 269,
+          "accuracy": 0.9963,
+          "alerts": 270,
+          "decided_by": {
+            "classifier": 269,
+            "detector": 1,
+            "none": 0
+          },
+          "severity_levels": {
+            "Critical": 114,
+            "Low": 16,
+            "High": 84,
+            "Medium": 54,
+            "Review": 1,
+            "None": 1
+          },
+          "review": 1,
+          "retake": 1,
+          "per_class": {
+            "crazing": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "inclusion": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "patches": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "pitted_surface": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "rolled-in_scale": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "scratches": {
+              "images": 45,
+              "correct": 44,
+              "accuracy": 0.9778
+            }
+          },
+          "confusion": {
+            "crazing": {
+              "crazing": 45
+            },
+            "inclusion": {
+              "inclusion": 45
+            },
+            "patches": {
+              "patches": 45
+            },
+            "pitted_surface": {
+              "pitted_surface": 45
+            },
+            "rolled-in_scale": {
+              "rolled-in_scale": 45
+            },
+            "scratches": {
+              "scratches": 44,
+              "not a steel surface": 1
+            }
+          },
+          "errors": [
+            {
+              "image": "scratches_74.jpg",
+              "true_class": "scratches",
+              "final_class": "not a steel surface",
+              "source": "classifier",
+              "classifier": {
+                "class_name": "not_steel",
+                "class_id": 6,
+                "confidence": 0.688402533531189
+              },
+              "reason": "classifier not_steel 0.688 >= 0.33: not a steel surface, 2 kept detection(s) ignored -> RETAKE"
+            }
+          ]
+        },
+        "not_steel": {
+          "images": 300,
+          "correct": 300,
+          "accuracy": 1.0,
+          "alerts": 300,
+          "decided_by": {
+            "classifier": 300,
+            "detector": 0,
+            "none": 0
+          },
+          "severity_levels": {
+            "None": 300
+          },
+          "review": 0,
+          "retake": 300,
+          "per_class": {
+            "crazing": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "inclusion": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "patches": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "pitted_surface": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "rolled-in_scale": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "scratches": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "not_steel": {
+              "images": 300,
+              "correct": 300,
+              "accuracy": 1.0
+            }
+          },
+          "confusion": {
+            "crazing": {},
+            "inclusion": {},
+            "patches": {},
+            "pitted_surface": {},
+            "rolled-in_scale": {},
+            "scratches": {},
+            "not_steel": {
+              "not a steel surface": 300
+            }
+          },
+          "errors": []
+        }
+      },
+      "int8": {
+        "steel": {
+          "images": 270,
+          "correct": 269,
+          "accuracy": 0.9963,
+          "alerts": 270,
+          "decided_by": {
+            "classifier": 269,
+            "detector": 1,
+            "none": 0
+          },
+          "severity_levels": {
+            "Critical": 107,
+            "Medium": 68,
+            "High": 72,
+            "Review": 4,
+            "Low": 18,
+            "None": 1
+          },
+          "review": 4,
+          "retake": 1,
+          "per_class": {
+            "crazing": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "inclusion": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "patches": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "pitted_surface": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "rolled-in_scale": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "scratches": {
+              "images": 45,
+              "correct": 44,
+              "accuracy": 0.9778
+            }
+          },
+          "confusion": {
+            "crazing": {
+              "crazing": 45
+            },
+            "inclusion": {
+              "inclusion": 45
+            },
+            "patches": {
+              "patches": 45
+            },
+            "pitted_surface": {
+              "pitted_surface": 45
+            },
+            "rolled-in_scale": {
+              "rolled-in_scale": 45
+            },
+            "scratches": {
+              "scratches": 44,
+              "not a steel surface": 1
+            }
+          },
+          "errors": [
+            {
+              "image": "scratches_74.jpg",
+              "true_class": "scratches",
+              "final_class": "not a steel surface",
+              "source": "classifier",
+              "classifier": {
+                "class_name": "not_steel",
+                "class_id": 6,
+                "confidence": 0.688402533531189
+              },
+              "reason": "classifier not_steel 0.688 >= 0.33: not a steel surface, 2 kept detection(s) ignored -> RETAKE"
+            }
+          ]
+        },
+        "not_steel": {
+          "images": 300,
+          "correct": 300,
+          "accuracy": 1.0,
+          "alerts": 300,
+          "decided_by": {
+            "classifier": 300,
+            "detector": 0,
+            "none": 0
+          },
+          "severity_levels": {
+            "None": 300
+          },
+          "review": 0,
+          "retake": 300,
+          "per_class": {
+            "crazing": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "inclusion": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "patches": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "pitted_surface": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "rolled-in_scale": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "scratches": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "not_steel": {
+              "images": 300,
+              "correct": 300,
+              "accuracy": 1.0
+            }
+          },
+          "confusion": {
+            "crazing": {},
+            "inclusion": {},
+            "patches": {},
+            "pitted_surface": {},
+            "rolled-in_scale": {},
+            "scratches": {},
+            "not_steel": {
+              "not a steel surface": 300
+            }
+          },
+          "errors": []
+        }
+      }
+    }
+  },
+  "test": {
+    "classifier_top1_7class": {
+      "pt": {
+        "images": 570,
+        "correct": 567,
+        "accuracy": 0.9947,
+        "per_class": {
+          "crazing": {
+            "images": 45,
+            "correct": 45,
+            "accuracy": 1.0
+          },
+          "inclusion": {
+            "images": 45,
+            "correct": 45,
+            "accuracy": 1.0
+          },
+          "patches": {
+            "images": 45,
+            "correct": 45,
+            "accuracy": 1.0
+          },
+          "pitted_surface": {
+            "images": 45,
+            "correct": 44,
+            "accuracy": 0.9778
+          },
+          "rolled-in_scale": {
+            "images": 45,
+            "correct": 45,
+            "accuracy": 1.0
+          },
+          "scratches": {
+            "images": 45,
+            "correct": 45,
+            "accuracy": 1.0
+          },
+          "not_steel": {
+            "images": 300,
+            "correct": 298,
+            "accuracy": 0.9933
+          }
+        }
+      },
+      "fp32": {
+        "images": 570,
+        "correct": 567,
+        "accuracy": 0.9947,
+        "per_class": {
+          "crazing": {
+            "images": 45,
+            "correct": 45,
+            "accuracy": 1.0
+          },
+          "inclusion": {
+            "images": 45,
+            "correct": 45,
+            "accuracy": 1.0
+          },
+          "patches": {
+            "images": 45,
+            "correct": 45,
+            "accuracy": 1.0
+          },
+          "pitted_surface": {
+            "images": 45,
+            "correct": 44,
+            "accuracy": 0.9778
+          },
+          "rolled-in_scale": {
+            "images": 45,
+            "correct": 45,
+            "accuracy": 1.0
+          },
+          "scratches": {
+            "images": 45,
+            "correct": 45,
+            "accuracy": 1.0
+          },
+          "not_steel": {
+            "images": 300,
+            "correct": 298,
+            "accuracy": 0.9933
+          }
+        }
+      }
+    },
+    "classifier_confusion_7x7": {
+      "pt": [
+        [
+          45,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          45,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          45,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          44,
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          45,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          45,
+          0
+        ],
+        [
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+          298
+        ]
+      ],
+      "fp32": [
+        [
+          45,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          45,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          45,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          44,
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          45,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          45,
+          0
+        ],
+        [
+          1,
+          0,
+          0,
+          1,
+          0,
+          0,
+          298
+        ]
+      ]
+    },
+    "confusion_order": [
+      "crazing",
+      "inclusion",
+      "patches",
+      "pitted_surface",
+      "rolled-in_scale",
+      "scratches",
+      "not_steel"
+    ],
+    "classifier_agreement_vs_pt": {
+      "fp32": {
+        "images": 570,
+        "same_top1_as_pt": 570,
+        "rate": 1.0,
+        "max_abs_prob_diff": 0.0,
+        "disagreements": []
+      },
+      "int8": {
+        "status": "skipped",
+        "reason": "INT8 not requested (--precisions fp32 --allow-skip-int8); FP32 only"
+      }
+    },
+    "pipelines": {
+      "pt": {
+        "pipeline": {
+          "det": "pt",
+          "cls": "pt",
+          "label": ".pt pipeline: detector .pt + classifier v2 .pt"
+        },
+        "steel_fused": {
+          "images": 270,
+          "correct": 269,
+          "accuracy": 0.9963,
+          "alerts": 270,
+          "decided_by": {
+            "classifier": 270,
+            "detector": 0,
+            "none": 0
+          },
+          "severity_levels": {
+            "Critical": 119,
+            "High": 73,
+            "Medium": 59,
+            "Low": 18,
+            "None": 1
+          },
+          "review": 0,
+          "retake": 1,
+          "per_class": {
+            "crazing": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "inclusion": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "patches": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "pitted_surface": {
+              "images": 45,
+              "correct": 44,
+              "accuracy": 0.9778
+            },
+            "rolled-in_scale": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "scratches": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            }
+          },
+          "confusion": {
+            "crazing": {
+              "crazing": 45
+            },
+            "inclusion": {
+              "inclusion": 45
+            },
+            "patches": {
+              "patches": 45
+            },
+            "pitted_surface": {
+              "pitted_surface": 44,
+              "not a steel surface": 1
+            },
+            "rolled-in_scale": {
+              "rolled-in_scale": 45
+            },
+            "scratches": {
+              "scratches": 45
+            }
+          },
+          "errors": [
+            {
+              "image": "pitted_surface_171.jpg",
+              "true_class": "pitted_surface",
+              "final_class": "not a steel surface",
+              "source": "classifier",
+              "classifier": {
+                "class_name": "not_steel",
+                "class_id": 6,
+                "confidence": 0.759885847568512
+              },
+              "reason": "classifier not_steel 0.760 >= 0.33: not a steel surface, 5 kept detection(s) ignored -> RETAKE"
+            }
+          ]
+        },
+        "steel_false_rejects": 1,
+        "steel_false_reject_rate": 0.0037,
+        "not_steel": {
+          "images": 300,
+          "correct": 298,
+          "accuracy": 0.9933,
+          "alerts": 300,
+          "decided_by": {
+            "classifier": 300,
+            "detector": 0,
+            "none": 0
+          },
+          "severity_levels": {
+            "None": 298,
+            "Review": 1,
+            "Critical": 1
+          },
+          "review": 1,
+          "retake": 298,
+          "per_class": {
+            "crazing": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "inclusion": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "patches": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "pitted_surface": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "rolled-in_scale": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "scratches": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "not_steel": {
+              "images": 300,
+              "correct": 298,
+              "accuracy": 0.9933
+            }
+          },
+          "confusion": {
+            "crazing": {},
+            "inclusion": {},
+            "patches": {},
+            "pitted_surface": {},
+            "rolled-in_scale": {},
+            "scratches": {},
+            "not_steel": {
+              "not a steel surface": 298,
+              "crazing": 1,
+              "pitted_surface": 1
+            }
+          },
+          "errors": [
+            {
+              "image": "dtd__blotchy_0054.jpg",
+              "true_class": "not_steel",
+              "final_class": "crazing",
+              "source": "classifier",
+              "classifier": {
+                "class_name": "crazing",
+                "class_id": 0,
+                "confidence": 0.982056200504303
+              },
+              "reason": "classifier crazing 0.982 >= 0.64; no kept crazing box (detector kept no box at all) -> Review: operator must check the part"
+            },
+            {
+              "image": "dtd__knitted_0137.jpg",
+              "true_class": "not_steel",
+              "final_class": "pitted_surface",
+              "source": "classifier",
+              "classifier": {
+                "class_name": "pitted_surface",
+                "class_id": 3,
+                "confidence": 0.9055209159851074
+              },
+              "reason": "classifier pitted_surface 0.906 >= 0.64; severity on 1 kept pitted_surface box(es): largest-severity defect 'pitted_surface' area ratio 0.9942 -> Critical"
+            }
+          ]
+        },
+        "not_steel_rejected": 298,
+        "not_steel_rejection_rate": 0.9933,
+        "not_steel_missed_outcome": {
+          "no defect found": 0,
+          "defect alert": 2
+        },
+        "not_steel_rejection_by_source": {
+          "coco": {
+            "images": 150,
+            "rejected": 150
+          },
+          "dtd": {
+            "images": 90,
+            "rejected": 88
+          },
+          "places365": {
+            "images": 60,
+            "rejected": 60
+          }
+        }
+      },
+      "fp32": {
+        "pipeline": {
+          "det": "fp32",
+          "cls": "fp32",
+          "label": "FP32 pipeline: detector FP32 + classifier v2 FP32"
+        },
+        "steel_fused": {
+          "images": 270,
+          "correct": 269,
+          "accuracy": 0.9963,
+          "alerts": 270,
+          "decided_by": {
+            "classifier": 270,
+            "detector": 0,
+            "none": 0
+          },
+          "severity_levels": {
+            "Critical": 119,
+            "High": 73,
+            "Medium": 59,
+            "Low": 18,
+            "None": 1
+          },
+          "review": 0,
+          "retake": 1,
+          "per_class": {
+            "crazing": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "inclusion": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "patches": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "pitted_surface": {
+              "images": 45,
+              "correct": 44,
+              "accuracy": 0.9778
+            },
+            "rolled-in_scale": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "scratches": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            }
+          },
+          "confusion": {
+            "crazing": {
+              "crazing": 45
+            },
+            "inclusion": {
+              "inclusion": 45
+            },
+            "patches": {
+              "patches": 45
+            },
+            "pitted_surface": {
+              "pitted_surface": 44,
+              "not a steel surface": 1
+            },
+            "rolled-in_scale": {
+              "rolled-in_scale": 45
+            },
+            "scratches": {
+              "scratches": 45
+            }
+          },
+          "errors": [
+            {
+              "image": "pitted_surface_171.jpg",
+              "true_class": "pitted_surface",
+              "final_class": "not a steel surface",
+              "source": "classifier",
+              "classifier": {
+                "class_name": "not_steel",
+                "class_id": 6,
+                "confidence": 0.7598859071731567
+              },
+              "reason": "classifier not_steel 0.760 >= 0.33: not a steel surface, 5 kept detection(s) ignored -> RETAKE"
+            }
+          ]
+        },
+        "steel_false_rejects": 1,
+        "steel_false_reject_rate": 0.0037,
+        "not_steel": {
+          "images": 300,
+          "correct": 298,
+          "accuracy": 0.9933,
+          "alerts": 300,
+          "decided_by": {
+            "classifier": 300,
+            "detector": 0,
+            "none": 0
+          },
+          "severity_levels": {
+            "None": 298,
+            "Review": 1,
+            "Critical": 1
+          },
+          "review": 1,
+          "retake": 298,
+          "per_class": {
+            "crazing": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "inclusion": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "patches": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "pitted_surface": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "rolled-in_scale": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "scratches": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "not_steel": {
+              "images": 300,
+              "correct": 298,
+              "accuracy": 0.9933
+            }
+          },
+          "confusion": {
+            "crazing": {},
+            "inclusion": {},
+            "patches": {},
+            "pitted_surface": {},
+            "rolled-in_scale": {},
+            "scratches": {},
+            "not_steel": {
+              "not a steel surface": 298,
+              "crazing": 1,
+              "pitted_surface": 1
+            }
+          },
+          "errors": [
+            {
+              "image": "dtd__blotchy_0054.jpg",
+              "true_class": "not_steel",
+              "final_class": "crazing",
+              "source": "classifier",
+              "classifier": {
+                "class_name": "crazing",
+                "class_id": 0,
+                "confidence": 0.9820558428764343
+              },
+              "reason": "classifier crazing 0.982 >= 0.64; no kept crazing box (detector kept no box at all) -> Review: operator must check the part"
+            },
+            {
+              "image": "dtd__knitted_0137.jpg",
+              "true_class": "not_steel",
+              "final_class": "pitted_surface",
+              "source": "classifier",
+              "classifier": {
+                "class_name": "pitted_surface",
+                "class_id": 3,
+                "confidence": 0.9055209159851074
+              },
+              "reason": "classifier pitted_surface 0.906 >= 0.64; severity on 1 kept pitted_surface box(es): largest-severity defect 'pitted_surface' area ratio 0.9942 -> Critical"
+            }
+          ]
+        },
+        "not_steel_rejected": 298,
+        "not_steel_rejection_rate": 0.9933,
+        "not_steel_missed_outcome": {
+          "no defect found": 0,
+          "defect alert": 2
+        },
+        "not_steel_rejection_by_source": {
+          "coco": {
+            "images": 150,
+            "rejected": 150
+          },
+          "dtd": {
+            "images": 90,
+            "rejected": 88
+          },
+          "places365": {
+            "images": 60,
+            "rejected": 60
+          }
+        }
+      },
+      "int8": {
+        "pipeline": {
+          "det": "int8",
+          "cls": "fp32",
+          "label": "INT8 pipeline: detector INT8 + classifier v2 FP32"
+        },
+        "steel_fused": {
+          "images": 270,
+          "correct": 269,
+          "accuracy": 0.9963,
+          "alerts": 270,
+          "decided_by": {
+            "classifier": 270,
+            "detector": 0,
+            "none": 0
+          },
+          "severity_levels": {
+            "Critical": 104,
+            "Medium": 65,
+            "High": 71,
+            "Low": 24,
+            "Review": 5,
+            "None": 1
+          },
+          "review": 5,
+          "retake": 1,
+          "per_class": {
+            "crazing": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "inclusion": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "patches": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "pitted_surface": {
+              "images": 45,
+              "correct": 44,
+              "accuracy": 0.9778
+            },
+            "rolled-in_scale": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            },
+            "scratches": {
+              "images": 45,
+              "correct": 45,
+              "accuracy": 1.0
+            }
+          },
+          "confusion": {
+            "crazing": {
+              "crazing": 45
+            },
+            "inclusion": {
+              "inclusion": 45
+            },
+            "patches": {
+              "patches": 45
+            },
+            "pitted_surface": {
+              "pitted_surface": 44,
+              "not a steel surface": 1
+            },
+            "rolled-in_scale": {
+              "rolled-in_scale": 45
+            },
+            "scratches": {
+              "scratches": 45
+            }
+          },
+          "errors": [
+            {
+              "image": "pitted_surface_171.jpg",
+              "true_class": "pitted_surface",
+              "final_class": "not a steel surface",
+              "source": "classifier",
+              "classifier": {
+                "class_name": "not_steel",
+                "class_id": 6,
+                "confidence": 0.7598859071731567
+              },
+              "reason": "classifier not_steel 0.760 >= 0.33: not a steel surface, 4 kept detection(s) ignored -> RETAKE"
+            }
+          ]
+        },
+        "steel_false_rejects": 1,
+        "steel_false_reject_rate": 0.0037,
+        "not_steel": {
+          "images": 300,
+          "correct": 298,
+          "accuracy": 0.9933,
+          "alerts": 300,
+          "decided_by": {
+            "classifier": 300,
+            "detector": 0,
+            "none": 0
+          },
+          "severity_levels": {
+            "None": 298,
+            "Review": 1,
+            "Critical": 1
+          },
+          "review": 1,
+          "retake": 298,
+          "per_class": {
+            "crazing": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "inclusion": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "patches": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "pitted_surface": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "rolled-in_scale": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "scratches": {
+              "images": 0,
+              "correct": 0,
+              "accuracy": null
+            },
+            "not_steel": {
+              "images": 300,
+              "correct": 298,
+              "accuracy": 0.9933
+            }
+          },
+          "confusion": {
+            "crazing": {},
+            "inclusion": {},
+            "patches": {},
+            "pitted_surface": {},
+            "rolled-in_scale": {},
+            "scratches": {},
+            "not_steel": {
+              "not a steel surface": 298,
+              "crazing": 1,
+              "pitted_surface": 1
+            }
+          },
+          "errors": [
+            {
+              "image": "dtd__blotchy_0054.jpg",
+              "true_class": "not_steel",
+              "final_class": "crazing",
+              "source": "classifier",
+              "classifier": {
+                "class_name": "crazing",
+                "class_id": 0,
+                "confidence": 0.9820558428764343
+              },
+              "reason": "classifier crazing 0.982 >= 0.64; no kept crazing box (detector kept no box at all) -> Review: operator must check the part"
+            },
+            {
+              "image": "dtd__knitted_0137.jpg",
+              "true_class": "not_steel",
+              "final_class": "pitted_surface",
+              "source": "classifier",
+              "classifier": {
+                "class_name": "pitted_surface",
+                "class_id": 3,
+                "confidence": 0.9055209159851074
+              },
+              "reason": "classifier pitted_surface 0.906 >= 0.64; severity on 1 kept pitted_surface box(es): largest-severity defect 'pitted_surface' area ratio 0.9933 -> Critical"
+            }
+          ]
+        },
+        "not_steel_rejected": 298,
+        "not_steel_rejection_rate": 0.9933,
+        "not_steel_missed_outcome": {
+          "no defect found": 0,
+          "defect alert": 2
+        },
+        "not_steel_rejection_by_source": {
+          "coco": {
+            "images": 150,
+            "rejected": 150
+          },
+          "dtd": {
+            "images": 90,
+            "rejected": 88
+          },
+          "places365": {
+            "images": 60,
+            "rejected": 60
+          }
+        }
+      }
+    },
+    "note": "NEU-DET has no defect-free steel images; not_steel = COCO/DTD/Places365, not factory scenes."
+  }
+}

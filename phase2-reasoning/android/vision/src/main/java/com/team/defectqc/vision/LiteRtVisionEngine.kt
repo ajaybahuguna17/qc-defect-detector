@@ -15,14 +15,15 @@ class LiteRtVisionEngine(context: Context) {
     private val detector: Interpreter
     private val classifier: Interpreter
 
+    /** Classifier file, classes and count, from classifier/model_io.json + labels.txt (v1 or v2). */
+    val classifierSpec: ClassifierSpec = readClassifierSpec(appContext)
+
     init {
         detector = loadModel(
             "detector/defect_yolov8n_320_fp32.tflite"
         )
 
-        classifier = loadModel(
-            "classifier/defect_cls_yolov8n_224_fp32.tflite"
-        )
+        classifier = loadModel(classifierSpec.assetPath)
 
         checkModelShapes()
     }
@@ -65,8 +66,11 @@ class LiteRtVisionEngine(context: Context) {
 
         check(
             classifier.getOutputTensor(0).shape().toList() ==
-                listOf(1, 6)
-        )
+                listOf(1, classifierSpec.numClasses)
+        ) {
+            "classifier output ${classifier.getOutputTensor(0).shape().toList()} != " +
+                "[1, ${classifierSpec.numClasses}] from labels.txt"
+        }
 
         check(detector.getInputTensor(0).dataType() == DataType.FLOAT32)
         check(classifier.getInputTensor(0).dataType() == DataType.FLOAT32)
@@ -96,9 +100,10 @@ class LiteRtVisionEngine(context: Context) {
 
         require(inputData.size == 3 * 224 * 224)
 
+        val n = classifierSpec.numClasses
         val input = createInputBuffer(inputData)
         val output = ByteBuffer
-            .allocateDirect(6 * 4)
+            .allocateDirect(n * 4)
             .order(ByteOrder.nativeOrder())
 
         synchronized(classifier) {
@@ -107,7 +112,7 @@ class LiteRtVisionEngine(context: Context) {
 
         output.rewind()
 
-        return FloatArray(6) {
+        return FloatArray(n) {
             output.float
         }
     }
@@ -128,4 +133,11 @@ class LiteRtVisionEngine(context: Context) {
         detector.close()
         classifier.close()
     }
+}
+
+internal fun readClassifierSpec(context: Context): ClassifierSpec {
+    val assets = context.applicationContext.assets
+    val modelIo = assets.open(ClassifierSpec.MODEL_IO).bufferedReader().use { it.readText() }
+    val labels = assets.open(ClassifierSpec.LABELS).bufferedReader().use { it.readText() }
+    return ClassifierSpec.parse(modelIo, labels)
 }

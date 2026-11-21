@@ -3,27 +3,26 @@ package com.team.defectqc.vision
 
 import kotlin.math.max
 
+/**
+ * Fusion of detector + classifier for one image. Matches phase1-vision/fusion.py:
+ *
+ * 0. not_steel gate (classifier v2 only, checked first): top-1 == not_steel with
+ *    p >= [VisionConfig.NOT_STEEL_THRESHOLD] -> "not a steel surface", alert false, no severity,
+ *    decision RETAKE, detector boxes ignored. A not_steel top-1 below that threshold names no
+ *    defect: the classifier does not fire and the detector decides alone.
+ * 1-4. Phase 1.1 rule (kept detections, final class, alert, severity / Review), unchanged.
+ *
+ * Then the app-only **unsure -> HOLD** safety gate (not in fusion.py): on an alert, if
+ *  (a) the classifier did not fire AND the best kept box is < [VisionConfig.UNSURE_BEST_BOX_CONFIDENCE], or
+ *  (b) the kept boxes cover >= [VisionConfig.UNSURE_DISTINCT_CLASSES] different classes,
+ * the result keeps its class / boxes / severity for display but gets decision HOLD
+ * ("Unsure - manual check") and no Llama advice.
+ */
 object FusionSeverity {
 
-    private const val CLASSIFIER_THRESHOLD = 0.64f
+    private const val CLASSIFIER_THRESHOLD = VisionConfig.CLASSIFIER_THRESHOLD
 
-    private val classThresholds = mapOf(
-        "crazing" to 0.10f,
-        "inclusion" to 0.50f,
-        "patches" to 0.55f,
-        "pitted_surface" to 0.15f,
-        "rolled-in_scale" to 0.15f,
-        "scratches" to 0.30f
-    )
-
-    private val classNames = listOf(
-        "crazing",
-        "inclusion",
-        "patches",
-        "pitted_surface",
-        "rolled-in_scale",
-        "scratches"
-    )
+    private val classThresholds = VisionConfig.DETECTOR_CLASS_THRESHOLDS
 
     fun combine(
         detectorBoxes: List<VisionBox>,
@@ -32,11 +31,19 @@ object FusionSeverity {
         imageHeight: Int,
         detectorName: String = "fp32",
         detectorMs: Long = 0L,
-        classifierMs: Long = 0L
+        classifierMs: Long = 0L,
+        classNames: List<String> = VisionConfig.NEU_CLASSES,
+        notSteelThreshold: Float = VisionConfig.NOT_STEEL_THRESHOLD
     ): VisionResult {
 
-        require(classifierProbabilities.size == 6)
+        require(classNames == VisionConfig.NEU_CLASSES || classNames == VisionConfig.CLS7_CLASSES) {
+            "unsupported classifier classes $classNames"
+        }
+        require(classifierProbabilities.size == classNames.size) {
+            "classifier output has ${classifierProbabilities.size} values, expected ${classNames.size}"
+        }
         require(imageWidth > 0 && imageHeight > 0)
+        require(notSteelThreshold in 0f..1f)
 
         // Apply the class-specific detector thresholds.
         val keptBoxes = detectorBoxes
@@ -69,8 +76,36 @@ object FusionSeverity {
 
         val classifierClass = classNames[classifierIndex]
 
+        val classifier = ClassifierResult(
+            classifierClass,
+            classifierConfidence,
+            classifierProbabilities
+        )
+
+        // 0. not_steel gate: reject the photo, ignore the detector.
+        if (classifierClass == VisionConfig.NOT_STEEL && classifierConfidence >= notSteelThreshold) {
+            return VisionResult(
+                detector = detectorName,
+                boxes = emptyList(),
+                classifier = classifier,
+                alert = false,
+                finalClass = VisionConfig.NOT_STEEL_LABEL,
+                decidedBy = "classifier",
+                severityLevel = null,
+                largestAreaPct = null,
+                reason = "classifier ${VisionConfig.NOT_STEEL} %.3f >= %.2f: not a steel surface, %d kept detection(s) ignored".format(
+                    java.util.Locale.US, classifierConfidence, notSteelThreshold, keptBoxes.size
+                ),
+                detectorMs = detectorMs,
+                classifierMs = classifierMs,
+                decision = VisionDecision.RETAKE
+            )
+        }
+
+        // A not_steel top-1 below its threshold names no defect: the classifier does not fire.
         val classifierAccepted =
-            classifierConfidence >= CLASSIFIER_THRESHOLD
+            classifierClass != VisionConfig.NOT_STEEL &&
+                classifierConfidence >= CLASSIFIER_THRESHOLD
 
         val alert =
             keptBoxes.isNotEmpty() || classifierAccepted
@@ -103,11 +138,7 @@ object FusionSeverity {
             return VisionResult(
                 detector = detectorName,
                 boxes = emptyList(),
-                classifier = ClassifierResult(
-                    classifierClass,
-                    classifierConfidence,
-                    classifierProbabilities
-                ),
+                classifier = classifier,
                 alert = false,
                 finalClass = finalClass,
                 decidedBy = decidedBy,
@@ -121,14 +152,10 @@ object FusionSeverity {
 
         // An alert without any box for the final class requires review.
         if (finalBoxes.isEmpty()) {
-            return VisionResult(
+            return unsureGate(classifierAccepted, keptBoxes, VisionResult(
                 detector = detectorName,
                 boxes = keptBoxes,
-                classifier = ClassifierResult(
-                    classifierClass,
-                    classifierConfidence,
-                    classifierProbabilities
-                ),
+                classifier = classifier,
                 alert = true,
                 finalClass = finalClass,
                 decidedBy = decidedBy,
@@ -138,7 +165,7 @@ object FusionSeverity {
                     "$finalClass boxes are available for severity assessment.",
                 detectorMs = detectorMs,
                 classifierMs = classifierMs
-            )
+            ))
         }
 
         // Calculate the largest final-class box area as a fraction
@@ -193,14 +220,10 @@ object FusionSeverity {
             ) +
             if (finalBoxes.size >= 3) "; escalated for 3+ detections" else ""
 
-        return VisionResult(
+        return unsureGate(classifierAccepted, keptBoxes, VisionResult(
             detector = detectorName,
             boxes = keptBoxes,
-            classifier = ClassifierResult(
-                classifierClass,
-                classifierConfidence,
-                classifierProbabilities
-            ),
+            classifier = classifier,
             alert = true,
             finalClass = finalClass,
             decidedBy = decidedBy,
@@ -209,6 +232,30 @@ object FusionSeverity {
             reason = reason,
             detectorMs = detectorMs,
             classifierMs = classifierMs
+        ))
+    }
+
+    /** App safety gate: an alert the models are unsure about -> decision HOLD (see class doc). */
+    internal fun unsureGate(
+        classifierFired: Boolean,
+        keptBoxes: List<VisionBox>,
+        result: VisionResult
+    ): VisionResult {
+        if (!result.alert || keptBoxes.isEmpty()) return result
+        val best = keptBoxes.maxOf { it.confidence }
+        val distinct = keptBoxes.map { it.className }.distinct()
+        val why = when {
+            distinct.size >= VisionConfig.UNSURE_DISTINCT_CLASSES ->
+                "kept boxes of ${distinct.size} different classes $distinct"
+            !classifierFired && best < VisionConfig.UNSURE_BEST_BOX_CONFIDENCE ->
+                "classifier below its threshold and best kept box %.3f < %.2f".format(
+                    java.util.Locale.US, best, VisionConfig.UNSURE_BEST_BOX_CONFIDENCE
+                )
+            else -> return result
+        }
+        return result.copy(
+            decision = VisionDecision.HOLD,
+            reason = "Unsure - manual check: $why; ${result.reason}"
         )
     }
 }

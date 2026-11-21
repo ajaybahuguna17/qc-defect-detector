@@ -11,6 +11,8 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.executorchllamademo.ETLogging
+import com.example.executorchllamademo.aanetra.history.InspectionHistory
+import com.example.executorchllamademo.aanetra.history.InspectionRecord
 import com.team.defectqc.advisor.LlamaAdvisor
 import com.team.defectqc.core.Advisory
 import com.team.defectqc.core.DetectionEvent
@@ -36,6 +38,8 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
     sealed interface AdviceState {
         data object None : AdviceState
         data object NoDefect : AdviceState
+        /** RETAKE or unsure HOLD: Llama is not called (see [needsAdvice]). */
+        data class Skipped(val reason: String) : AdviceState
         data class NotReady(val reason: String) : AdviceState
         data class Generating(val startedAtMs: Long) : AdviceState
         data class Done(val advisory: Advisory) : AdviceState
@@ -47,7 +51,9 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
         val bitmap: Bitmap,
         val event: DetectionEvent,
         val decision: QualityDecision,
-        val visionMs: Long
+        val visionMs: Long,
+        /** Row id in the local inspection log, or null if saving failed. */
+        val recordId: Long? = null
     )
 
     private val _visionStatus = MutableStateFlow<VisionStatus>(VisionStatus.Loading)
@@ -66,6 +72,12 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
     val advice: StateFlow<AdviceState> = _advice.asStateFlow()
 
     val modelState: StateFlow<ModelManager.State> = ModelManager.state
+
+    /** Local inspection log (SQLite + thumbnails). Logging never changes the result. */
+    private val history = InspectionHistory(app)
+
+    private val _historyRecords = MutableStateFlow<List<InspectionRecord>>(emptyList())
+    val historyRecords: StateFlow<List<InspectionRecord>> = _historyRecords.asStateFlow()
 
     @Volatile
     private var pipeline: DefectVisionPipeline? = null
@@ -125,10 +137,10 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
 
     fun retryAdvice() {
         val current = _result.value ?: return
-        if (current.event.alert && _advice.value is AdviceState.Failed) requestAdvice(current.event)
+        if (needsAdvice(current.event) && _advice.value is AdviceState.Failed) requestAdvice(current.event)
     }
 
-    fun inspect(uri: Uri) {
+    fun inspect(uri: Uri, source: String = InspectionRecord.SOURCE_GALLERY) {
         if (_busy.value) return
         val vision = pipeline
         if (vision == null) {
@@ -151,12 +163,16 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
                         imageName = uri.lastPathSegment ?: "inspection_image"
                     )
                     InspectionResult(bitmap, event, QualityDecision.decide(event), visionMs)
-                }
+                }.let { saveToHistory(it, source) }
                 _result.value = inspection
-                if (inspection.event.alert) {
-                    requestAdvice(inspection.event)
-                } else {
-                    _advice.value = AdviceState.NoDefect
+                val event = inspection.event
+                when {
+                    event.decision == QualityDecision.DECISION_RETAKE ->
+                        _advice.value = AdviceState.Skipped("No advice: retake the photo first.")
+                    event.decision != null ->
+                        _advice.value = AdviceState.Skipped("No AI advice for an unsure result: check the part manually.")
+                    event.alert -> requestAdvice(event)
+                    else -> _advice.value = AdviceState.NoDefect
                 }
             } catch (e: Throwable) {
                 Log.e(TAG, "Inspection failed", e)
@@ -168,6 +184,7 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun requestAdvice(event: DetectionEvent) {
+        if (!needsAdvice(event)) return   // never call Llama for RETAKE or unsure HOLD
         val state = ModelManager.state.value
         if (state !is ModelManager.State.Ready || ModelManager.module == null) {
             _advice.value = AdviceState.NotReady(notReadyReason(state))
@@ -178,6 +195,9 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
         adviceJob = viewModelScope.launch {
             try {
                 val advisory = advisor.advise(event)
+                // prompt / generated tokens, TTFT, total ms, cached (also in logcat, tag LlamaAdvisor)
+                ETLogging.getInstance().log("AANetra " + LlamaAdvisor.adviceLogLine(advisory))
+                logAdvice(event, advisory)
                 if (_result.value?.event?.id == event.id) {
                     _advice.value = AdviceState.Done(advisory)
                 }
@@ -192,6 +212,58 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
                 if (_result.value?.event?.id == event.id) {
                     _advice.value = AdviceState.Failed
                 }
+            }
+        }
+    }
+
+    /** Save the vision result as one log row (after vision, before advice). */
+    private suspend fun saveToHistory(r: InspectionResult, source: String): InspectionResult =
+        withContext(Dispatchers.IO) {
+            try {
+                val row = InspectionRecord.fromInspection(r.event, r.decision, r.visionMs, source, null)
+                r.copy(recordId = history.save(row, r.bitmap))
+            } catch (e: Throwable) {
+                Log.e(TAG, "Could not save the inspection to the log", e)
+                r
+            }
+        }
+
+    /** Fill in the advice of the logged row when advice arrives. */
+    private fun logAdvice(event: DetectionEvent, advisory: Advisory) {
+        val id = _result.value?.takeIf { it.event.id == event.id }?.recordId ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                history.updateAdvice(id, InspectionRecord.adviceText(advisory), advisory.llmMs, advisory.cached)
+            } catch (e: Throwable) {
+                Log.e(TAG, "Could not save the advice to the log", e)
+            }
+        }
+    }
+
+    fun refreshHistory() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _historyRecords.value = try { history.all() } catch (e: Throwable) {
+                Log.e(TAG, "Could not read the inspection log", e); emptyList()
+            }
+        }
+    }
+
+    fun deleteAllHistory() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try { history.deleteAll() } catch (e: Throwable) { Log.e(TAG, "Could not clear the log", e) }
+            _historyRecords.value = emptyList()
+        }
+    }
+
+    /** Write the CSV off the main thread, then hand the share-sheet intent to [onReady] (main thread). */
+    fun exportHistory(onReady: (android.content.Intent) -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val intent = withContext(Dispatchers.IO) { history.shareIntent(history.exportCsv()) }
+                onReady(intent)
+            } catch (e: Throwable) {
+                Log.e(TAG, "CSV export failed", e)
+                onError("Export failed: ${e.message ?: e.javaClass.simpleName}")
             }
         }
     }
@@ -269,6 +341,9 @@ class InspectionViewModel(app: Application) : AndroidViewModel(app) {
     companion object {
         private const val TAG = "AANetraInspect"
         private const val MAX_SIDE = 4096
+
+        /** Llama advice only for a defect alert without a gate decision (RETAKE / unsure HOLD). */
+        fun needsAdvice(event: DetectionEvent): Boolean = event.alert && event.decision == null
 
         fun percent(done: Long, total: Long): Int =
             if (total <= 0) 0 else ((done * 100) / total).toInt().coerceIn(0, 100)

@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -82,7 +83,8 @@ fun AANetraScreen(
     onNewInspection: () -> Unit,
     onAcceptMobileData: () -> Unit,
     onDeclineMobileData: () -> Unit,
-    onOpenDeveloperSettings: () -> Unit
+    onOpenDeveloperSettings: () -> Unit,
+    onOpenHistory: () -> Unit = {}
 ) {
     SteelBackground {
         Column(
@@ -94,7 +96,7 @@ fun AANetraScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Header(onOpenDeveloperSettings)
+            Header(onOpenDeveloperSettings, onOpenHistory)
             StatusCard(visionStatus, modelState, onRetryModel)
 
             val visionReady = visionStatus is VisionStatus.Ready
@@ -132,10 +134,15 @@ fun AANetraScreen(
             }
 
             result?.let {
-                DecisionCard(it)
-                ImageWithBoxes(it)
-                VisionDetailsCard(it)
-                AdviceCard(advice, onRetryAdvice)
+                if (it.decision.action == QualityAction.RETAKE) {
+                    RetakeCard(it, enabled = visionReady && !busy, onTakePhoto = onTakePhoto, onPickImage = onPickImage)
+                    ImageWithBoxes(it)
+                } else {
+                    DecisionCard(it)
+                    ImageWithBoxes(it)
+                    VisionDetailsCard(it)
+                    AdviceCard(advice, onRetryAdvice)
+                }
                 OutlinedButton(
                     onClick = onNewInspection,
                     enabled = !busy,
@@ -186,7 +193,7 @@ fun AANetraScreen(
 }
 
 @Composable
-private fun Header(onOpenDeveloperSettings: () -> Unit) {
+private fun Header(onOpenDeveloperSettings: () -> Unit, onOpenHistory: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text("AANetra", style = MaterialTheme.typography.headlineLarge, color = Steel.Orange)
@@ -195,6 +202,9 @@ private fun Header(onOpenDeveloperSettings: () -> Unit) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = Steel.TextDim
             )
+        }
+        IconButton(onClick = onOpenHistory) {
+            Icon(Icons.Filled.History, contentDescription = "Inspection history", tint = Steel.TextDim)
         }
         IconButton(onClick = onOpenDeveloperSettings) {
             Icon(Icons.Filled.Settings, contentDescription = "Developer settings", tint = Steel.TextDim)
@@ -313,7 +323,7 @@ private fun StatusCard(visionStatus: VisionStatus, modelState: ModelManager.Stat
     }
 }
 
-private fun severityColor(severity: String?): Color = when (severity?.lowercase()) {
+internal fun severityColor(severity: String?): Color = when (severity?.lowercase()) {
     "low" -> Steel.Green
     "medium" -> Steel.Yellow
     "high" -> Steel.SevOrange
@@ -326,7 +336,77 @@ private fun actionColor(action: QualityAction, stopLine: Boolean): Color = when 
     action == QualityAction.PASS || action == QualityAction.ACCEPT -> Steel.Green
     action == QualityAction.REWORK -> Steel.Yellow
     action == QualityAction.REJECT -> Steel.SevOrange
+    action == QualityAction.RETAKE -> Steel.RetakeBlue
     else -> Steel.Grey
+}
+
+/** RETAKE: not a usable photo of a bare steel surface. No severity, no advice. */
+@Composable
+private fun RetakeCard(
+    r: InspectionViewModel.InspectionResult,
+    enabled: Boolean,
+    onTakePhoto: () -> Unit,
+    onPickImage: () -> Unit
+) {
+    SteelCard(borderColor = Steel.RetakeBlue) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("DECISION", style = MaterialTheme.typography.labelMedium, color = Steel.TextDim)
+            Text(
+                r.decision.label,
+                fontSize = 40.sp,
+                fontWeight = FontWeight.Black,
+                color = Steel.RetakeBlue,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                r.decision.explanation,
+                style = MaterialTheme.typography.titleMedium,
+                color = Steel.Text,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                // Image-check RETAKE (decidedBy "image_check") keeps its own reason (too dark, blurry, ...);
+                // the classifier not_steel RETAKE gets operator guidance instead of the raw rule text.
+                if (r.event.decidedBy == "image_check") r.event.reason else NOT_STEEL_RETAKE_MESSAGE,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Steel.TextDim,
+                textAlign = TextAlign.Center
+            )
+            InspectedAt(r.event.timestampEpochMs)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(
+                    onClick = onTakePhoto,
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Steel.RetakeBlue,
+                        contentColor = Color(0xFF0E1620),
+                        disabledContainerColor = Steel.Card,
+                        disabledContentColor = Steel.TextDim
+                    )
+                ) { Text("Take photo again", style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center) }
+                OutlinedButton(
+                    onClick = onPickImage,
+                    enabled = enabled,
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, Steel.RetakeBlue)
+                ) {
+                    Text(
+                        "Pick another image",
+                        color = Steel.RetakeBlue,
+                        style = MaterialTheme.typography.labelLarge,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -351,8 +431,28 @@ private fun DecisionCard(r: InspectionViewModel.InspectionResult) {
                 color = Steel.Text,
                 textAlign = TextAlign.Center
             )
+            InspectedAt(r.event.timestampEpochMs)
         }
     }
+}
+
+/** "Inspected: <date, time>" in the phone's own date format and 12/24 h setting. */
+@Composable
+internal fun InspectedAt(timestampMs: Long) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    Text(
+        "Inspected: " + formatLocalDateTime(context, timestampMs),
+        style = MaterialTheme.typography.labelMedium,
+        color = Steel.TextDim,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.padding(top = 4.dp)
+    )
+}
+
+internal fun formatLocalDateTime(context: android.content.Context, timestampMs: Long): String {
+    val d = java.util.Date(timestampMs)
+    return android.text.format.DateFormat.getMediumDateFormat(context).format(d) + ", " +
+        android.text.format.DateFormat.getTimeFormat(context).format(d)
 }
 
 @Composable
@@ -474,6 +574,7 @@ private fun AdviceCard(advice: AdviceState, onRetryAdvice: () -> Unit) {
             when (advice) {
                 AdviceState.None -> Unit
                 AdviceState.NoDefect -> Text("No defect - no advice needed", style = MaterialTheme.typography.bodyLarge)
+                is AdviceState.Skipped -> Text(advice.reason, style = MaterialTheme.typography.bodyLarge, color = Steel.TextDim)
                 is AdviceState.NotReady -> Text(advice.reason, style = MaterialTheme.typography.bodyLarge, color = Steel.TextDim)
                 is AdviceState.Generating -> {
                     var now by remember { mutableLongStateOf(android.os.SystemClock.elapsedRealtime()) }
@@ -496,7 +597,7 @@ private fun AdviceCard(advice: AdviceState, onRetryAdvice: () -> Unit) {
                     AdviceSection("CAUSE", a.likelyCause)
                     AdviceSection("ACTION", a.recommendedAction)
                     val footer = if (a.cached) {
-                        "Cached advice"
+                        String.format(Locale.US, "Advice in %.1f s (cached)", a.llmMs / 1000f)
                     } else {
                         String.format(
                             Locale.US, "Advice in %.1f s  |  %.1f tokens/s",
@@ -533,3 +634,7 @@ private fun AdviceSection(title: String, body: String) {
         Text(body, style = MaterialTheme.typography.bodyLarge)
     }
 }
+
+private const val NOT_STEEL_RETAKE_MESSAGE =
+    "This photo doesn't match the steel-strip images AANetra is trained on. " +
+        "Please photograph a bare steel strip surface, close-up and evenly lit."

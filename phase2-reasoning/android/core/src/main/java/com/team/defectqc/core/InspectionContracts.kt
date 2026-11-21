@@ -42,7 +42,11 @@ data class DetectionEvent(
 
     val detectorMs: Long = 0L,
     val classifierMs: Long = 0L,
-    val lineId: String? = null
+    val lineId: String? = null,
+
+    // Gate decision from the vision pipeline: "RETAKE" (not steel / failed image check),
+    // "HOLD" (unsure), or null (decision follows from alert + severity). See QualityDecision.
+    val decision: String? = null
 )
 
 /**
@@ -59,7 +63,13 @@ data class Advisory(
     val llmMs: Long,
     val tokensPerSecond: Float,
     val cached: Boolean,
-    val rawResponse: String = ""
+    val rawResponse: String = "",
+    // Generation metrics (null when unknown, e.g. a cached or fake advisory).
+    val promptTokens: Int? = null,
+    val generatedTokens: Int? = null,
+    val ttftMs: Long? = null,
+    /** True when generation was stopped right after the ACTION line. */
+    val stoppedEarly: Boolean = false
 )
 
 interface Advisor {

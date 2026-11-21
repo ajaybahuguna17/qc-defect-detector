@@ -54,6 +54,30 @@ In-memory key: normalized defect type | severity | decision. Cache entries are c
 - The package has not been built on the user's Mac in this turn. Run the build and tests above
   before treating it as compile-verified.
 
+## Vision safety gates (Phase 1.2)
+All thresholds are in `vision/.../VisionConfig.kt`. Order for one photo:
+
+1. **Input checks before vision** (`ImageCheck.kt`, app only). Any failure -> decision **RETAKE**
+   with the reason, models not run: shorter side < 64 px; mean luma < 25 or > 235; mean HSV
+   saturation > 0.35 (too colourful for bare steel); variance of the 3x3 Laplacian on a 256 px
+   grayscale copy < 3.0 (flat / heavily defocused). The blur threshold is deliberately low: NEU
+   textures are smooth (the 12 demo examples measure 9.6 to 462), and a JVM test requires all 12
+   to pass with a 3x margin.
+2. **not_steel gate** (same as `phase1-vision/fusion.py`, classifier v2 only): top-1 `not_steel`
+   with p >= `NOT_STEEL_THRESHOLD` (0.33, chosen on val by the Phase 1.2 run) -> "not a steel
+   surface", no alert, no severity, **RETAKE**, detector boxes ignored.
+3. Phase 1.1 fusion + severity, unchanged.
+4. **Unsure -> HOLD** (app only, not in fusion.py): on an alert, if the classifier is below its
+   threshold AND the best kept box is < 0.50, or the kept boxes cover 3+ different classes ->
+   **HOLD "Unsure - manual check"**. Class, boxes and severity stay visible for the operator.
+   On the 12 demo examples none is HOLD.
+
+Llama is **never** called for RETAKE or unsure HOLD (`InspectionViewModel.needsAdvice`).
+The classifier (6-class v1 or 7-class v2) is chosen from `classifier/model_io.json` +
+`labels.txt` (`ClassifierSpec.kt`); `vision/build.gradle.kts` copies the classifier from
+`phase1-vision/models/exported/phase1_2/classifier/` when it exists, else `phase1_1`, and the
+detector always from `phase1_1`.
+
 ## Remaining Person B completion checks
 - Copy/import model files in the final app and test load there.
 - Test all six defect classes and multiple severity/decision combinations.

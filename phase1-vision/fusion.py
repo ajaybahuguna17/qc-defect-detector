@@ -1,17 +1,25 @@
 """
 Deterministic fusion of the defect DETECTOR (YOLOv8n) and the image CLASSIFIER (YOLOv8n-cls)
-for ONE image (Phase 1.1).
+for ONE image (Phase 1.1, plus the Phase 1.2 not_steel RETAKE rule).
 
 Inputs per image
 ----------------
 * detector output after decode + NMS: list of ``{class_name, confidence, bbox_xyxy}``
   (original image pixels, see MODEL_IO.md),
 * classifier top-1: ``{class_name, confidence}`` (use ``classifier_top1(probs)`` on the
-  6 softmax outputs),
+  6 softmax outputs of classifier v1, or ``classifier_top1(probs, CLS7_CLASSES)`` on the 7 outputs
+  of classifier v2, whose 7th class is ``not_steel``; ``classifier_classes(config, len(probs))``
+  picks the right list),
 * the original image width and height.
 
 The rule
 --------
+0. **not_steel gate (Phase 1.2, checked first).** If the classifier top-1 is
+   ``config["not_steel_class"]`` with ``confidence >= not_steel_threshold`` the photo is not a steel
+   surface: final_class ``"not a steel surface"``, source ``"classifier"``, alert False, no severity,
+   decision ``"RETAKE"``. Detector boxes are ignored (none are kept). If the top-1 is not_steel but
+   below that threshold, the classifier is treated as not firing (it named no defect) and the rule
+   continues at 1 with the detector alone. ``decision`` is None on every other branch.
 1. **Kept detections** = detections with ``confidence >= det_class_min_confidence[class]``
    (``det_min_confidence`` for a class not in the dict).
 2. **final_class**
@@ -40,6 +48,12 @@ answer was right on 270/270 TEST images for both pipelines. The detector thresho
 so the sweep never pays for a false alarm on a good part. They MUST be re-tuned with clean-part
 camera images in Phase 3. A unit test keeps this dict equal to fusion_config.json.
 
+``not_steel_threshold`` = 0.33 was chosen on VAL by the Phase 1.2 Colab run ``p12_cls7_notsteel_s42``
+(``results/phase1_2/fusion_config.json``: most not_steel rejected with steel false rejection <= 1 %;
+val 300/300 not_steel rejected, 1/270 steel false-rejected). ``cls_threshold`` 0.64 was re-checked
+on that run and kept. A unit test keeps both equal to that file. The gate only matters with
+classifier v2 (7 outputs); classifier v1 never outputs not_steel.
+
 Pure standard library (plus ``severity.py``), so it ports line for line to Kotlin.
 """
 
@@ -60,9 +74,14 @@ NEU_CLASSES: List[str] = [
     "rolled-in_scale",
     "scratches",
 ]
+NOT_STEEL = "not_steel"
+# Classifier v2 (Phase 1.2) output order: the 6 NEU classes, then not_steel.
+CLS7_CLASSES: List[str] = [*NEU_CLASSES, NOT_STEEL]
 
 NO_DEFECT = "no defect found"
 REVIEW = "Review"
+NOT_STEEL_LABEL = "not a steel surface"
+RETAKE = "RETAKE"
 
 FUSION_CONFIG: Dict[str, Any] = {
     # Class order of both models (labels.txt). Detections / classifier classes outside it raise.
@@ -86,12 +105,18 @@ FUSION_CONFIG: Dict[str, Any] = {
     "severity": copy.deepcopy(SEVERITY_CONFIG),
     "no_defect_label": NO_DEFECT,
     "review_level": REVIEW,
+    # Phase 1.2 reject gate: classifier top-1 == not_steel_class with p >= not_steel_threshold
+    # -> not_steel_label, alert False, decision RETAKE. Val sweep, Phase 1.2 run p12_cls7_notsteel_s42.
+    "not_steel_class": NOT_STEEL,
+    "not_steel_threshold": 0.33,
+    "not_steel_label": NOT_STEEL_LABEL,
+    "retake_decision": RETAKE,
 }
 
 
 @dataclass
 class FusionResult:
-    final_class: str                      # a class name, or config["no_defect_label"]
+    final_class: str                      # a class name, config["no_defect_label"] or config["not_steel_label"]
     source: str                           # "classifier" | "detector" | "none"
     alert: bool
     severity_level: Optional[str]         # Low | Medium | High | Critical | "Review" | None (no alert)
@@ -101,6 +126,7 @@ class FusionResult:
     kept_detections: List[Dict[str, Any]] = field(default_factory=list)       # all kept, any class
     final_class_detections: List[Dict[str, Any]] = field(default_factory=list)  # kept boxes of final_class
     severity: Optional[Dict[str, Any]] = None  # SeverityResult.to_dict() when severity.py ran
+    decision: Optional[str] = None        # config["retake_decision"] on the not_steel branch, else None
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -126,6 +152,17 @@ def classifier_top1(probs: Sequence[float], classes: Sequence[str] = NEU_CLASSES
     return {"class_name": classes[i], "class_id": i, "confidence": vals[i]}
 
 
+def classifier_classes(config: Mapping[str, Any], n_outputs: int) -> List[str]:
+    """Class list of a classifier with ``n_outputs`` softmax values: v1 = config classes (6),
+    v2 = config classes + not_steel_class (7)."""
+    classes = list(config["classes"])
+    if n_outputs == len(classes):
+        return classes
+    if n_outputs == len(classes) + 1:
+        return [*classes, str(config["not_steel_class"])]
+    raise ValueError(f"classifier output has {n_outputs} values, expected {len(classes)} or {len(classes) + 1}")
+
+
 def _severity_config(config: Mapping[str, Any]) -> Dict[str, Any]:
     sev = copy.deepcopy(dict(config["severity"]))
     sev["min_confidence"] = float(config["det_min_confidence"])
@@ -149,10 +186,21 @@ def fuse(
     classes = list(cfg["classes"])
     class_idx = {c: i for i, c in enumerate(classes)}
     cls_thr = _check_conf(cfg["cls_threshold"], "cls_threshold")
+    ns_class = str(cfg["not_steel_class"])
+    ns_thr = _check_conf(cfg["not_steel_threshold"], "not_steel_threshold")
     if image_width <= 0 or image_height <= 0:
         raise ValueError(f"image size must be positive, got {image_width}x{image_height}")
 
-    # 1. kept detections
+    # classifier (validated first: the not_steel gate needs it)
+    c_name: Optional[str] = None
+    c_conf: Optional[float] = None
+    if classifier is not None:
+        c_name = str(classifier["class_name"])
+        if c_name not in class_idx and c_name != ns_class:
+            raise ValueError(f"classifier class {c_name!r} is not one of {classes + [ns_class]}")
+        c_conf = _check_conf(classifier["confidence"], "classifier confidence")
+
+    # 1. kept detections (validated even when the gate below rejects the photo)
     kept: List[Dict[str, Any]] = []
     for d in detections:
         name = str(d["class_name"])
@@ -164,15 +212,24 @@ def fuse(
     # canonical order: confidence desc, class index, box -> output independent of input order
     kept.sort(key=lambda k: (-k["confidence"], class_idx[k["class_name"]], k["bbox_xyxy"]))
 
-    # classifier
-    c_name: Optional[str] = None
-    c_conf: Optional[float] = None
-    if classifier is not None:
-        c_name = str(classifier["class_name"])
-        if c_name not in class_idx:
-            raise ValueError(f"classifier class {c_name!r} is not one of {classes}")
-        c_conf = _check_conf(classifier["confidence"], "classifier confidence")
-    cls_fires = c_conf is not None and c_conf >= cls_thr
+    # 0. not_steel gate: reject the photo, ignore the detector
+    if c_name == ns_class and c_conf is not None and c_conf >= ns_thr:
+        return FusionResult(
+            final_class=str(cfg["not_steel_label"]), source="classifier", alert=False, severity_level=None,
+            reason=(f"classifier {ns_class} {c_conf:.3f} >= {ns_thr:.2f}: not a steel surface, "
+                    f"{len(kept)} kept detection(s) ignored -> {cfg['retake_decision']}"),
+            classifier_class=c_name, classifier_confidence=c_conf, kept_detections=[],
+            decision=str(cfg["retake_decision"]),
+        )
+
+    # a not_steel top-1 below its threshold names no defect: the classifier does not fire
+    cls_fires = c_conf is not None and c_name != ns_class and c_conf >= cls_thr
+    if c_conf is None:
+        clf_why = "not run"
+    elif c_name == ns_class:
+        clf_why = f"{ns_class} {c_conf:.3f} < {ns_thr:.2f} (no defect named)"
+    else:
+        clf_why = f"{c_name} {c_conf:.3f} < {cls_thr:.2f}"
 
     # 2. final class
     if cls_fires:
@@ -180,13 +237,13 @@ def fuse(
         why = f"classifier {c_name} {c_conf:.3f} >= {cls_thr:.2f}"
     elif kept:
         final_class, source = kept[0]["class_name"], "detector"
-        why = (f"classifier {'not run' if c_conf is None else f'{c_name} {c_conf:.3f} < {cls_thr:.2f}'}; "
+        why = (f"classifier {clf_why}; "
                f"top kept detection {final_class} {kept[0]['confidence']:.3f}")
     else:
         return FusionResult(
             final_class=str(cfg["no_defect_label"]), source="none", alert=False, severity_level=None,
             reason=(f"no detection at or above its class threshold and classifier "
-                    f"{'not run' if c_conf is None else f'{c_name} {c_conf:.3f} < {cls_thr:.2f}'}"),
+                    f"{clf_why}"),
             classifier_class=c_name, classifier_confidence=c_conf, kept_detections=[],
         )
 
