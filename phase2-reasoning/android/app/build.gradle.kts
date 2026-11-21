@@ -309,6 +309,8 @@ dependencies {
     implementation("androidx.activity:activity:1.9.0")
     implementation("org.json:json:20250107")
     testImplementation(libs.junit)
+    // JVM tests of the inspection log run its SQL on real SQLite (test only, not in the APK).
+    testImplementation("org.xerial:sqlite-jdbc:3.46.1.3")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.2.0")

@@ -14,9 +14,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.example.executorchllamademo.WelcomeActivity
+import com.example.executorchllamademo.aanetra.history.HistoryRoute
+import com.example.executorchllamademo.aanetra.history.InspectionRecord
 import java.io.File
 
 /** Launcher screen: operator inspection UI. LlamaDemo screens are behind the gear icon. */
@@ -28,13 +33,13 @@ class AANetraActivity : ComponentActivity() {
 
     private val pickImage = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
-    ) { uri -> uri?.let(viewModel::inspect) }
+    ) { uri -> uri?.let { viewModel.inspect(it, InspectionRecord.SOURCE_GALLERY) } }
 
     private val takePicture = registerForActivityResult(
         ActivityResultContracts.TakePicture()
     ) { saved ->
         val uri = pendingPhotoUri
-        if (saved && uri != null) viewModel.inspect(uri)
+        if (saved && uri != null) viewModel.inspect(uri, InspectionRecord.SOURCE_CAMERA)
     }
 
     private val cameraPermission = registerForActivityResult(
@@ -57,6 +62,23 @@ class AANetraActivity : ComponentActivity() {
                 val result by viewModel.result.collectAsState()
                 val error by viewModel.error.collectAsState()
                 val advice by viewModel.advice.collectAsState()
+                val historyRecords by viewModel.historyRecords.collectAsState()
+                var showHistory by rememberSaveable { mutableStateOf(false) }
+
+                if (showHistory) {
+                    HistoryRoute(
+                        records = historyRecords,
+                        onBack = { showHistory = false },
+                        onDeleteAll = viewModel::deleteAllHistory,
+                        onExport = {
+                            viewModel.exportHistory(
+                                onReady = { startActivity(it) },
+                                onError = { Toast.makeText(this, it, Toast.LENGTH_LONG).show() }
+                            )
+                        }
+                    )
+                    return@AANetraTheme
+                }
 
                 AANetraScreen(
                     visionStatus = visionStatus,
@@ -78,6 +100,10 @@ class AANetraActivity : ComponentActivity() {
                     onDeclineMobileData = viewModel::declineMobileData,
                     onOpenDeveloperSettings = {
                         startActivity(Intent(this, WelcomeActivity::class.java))
+                    },
+                    onOpenHistory = {
+                        viewModel.refreshHistory()
+                        showHistory = true
                     }
                 )
             }

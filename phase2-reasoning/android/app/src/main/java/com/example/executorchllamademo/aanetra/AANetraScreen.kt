@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
@@ -82,7 +83,8 @@ fun AANetraScreen(
     onNewInspection: () -> Unit,
     onAcceptMobileData: () -> Unit,
     onDeclineMobileData: () -> Unit,
-    onOpenDeveloperSettings: () -> Unit
+    onOpenDeveloperSettings: () -> Unit,
+    onOpenHistory: () -> Unit = {}
 ) {
     SteelBackground {
         Column(
@@ -94,7 +96,7 @@ fun AANetraScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Header(onOpenDeveloperSettings)
+            Header(onOpenDeveloperSettings, onOpenHistory)
             StatusCard(visionStatus, modelState, onRetryModel)
 
             val visionReady = visionStatus is VisionStatus.Ready
@@ -191,7 +193,7 @@ fun AANetraScreen(
 }
 
 @Composable
-private fun Header(onOpenDeveloperSettings: () -> Unit) {
+private fun Header(onOpenDeveloperSettings: () -> Unit, onOpenHistory: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text("AANetra", style = MaterialTheme.typography.headlineLarge, color = Steel.Orange)
@@ -200,6 +202,9 @@ private fun Header(onOpenDeveloperSettings: () -> Unit) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = Steel.TextDim
             )
+        }
+        IconButton(onClick = onOpenHistory) {
+            Icon(Icons.Filled.History, contentDescription = "Inspection history", tint = Steel.TextDim)
         }
         IconButton(onClick = onOpenDeveloperSettings) {
             Icon(Icons.Filled.Settings, contentDescription = "Developer settings", tint = Steel.TextDim)
@@ -318,7 +323,7 @@ private fun StatusCard(visionStatus: VisionStatus, modelState: ModelManager.Stat
     }
 }
 
-private fun severityColor(severity: String?): Color = when (severity?.lowercase()) {
+internal fun severityColor(severity: String?): Color = when (severity?.lowercase()) {
     "low" -> Steel.Green
     "medium" -> Steel.Yellow
     "high" -> Steel.SevOrange
@@ -371,6 +376,7 @@ private fun RetakeCard(
                 color = Steel.TextDim,
                 textAlign = TextAlign.Center
             )
+            InspectedAt(r.event.timestampEpochMs)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(
                     onClick = onTakePhoto,
@@ -425,8 +431,28 @@ private fun DecisionCard(r: InspectionViewModel.InspectionResult) {
                 color = Steel.Text,
                 textAlign = TextAlign.Center
             )
+            InspectedAt(r.event.timestampEpochMs)
         }
     }
+}
+
+/** "Inspected: <date, time>" in the phone's own date format and 12/24 h setting. */
+@Composable
+internal fun InspectedAt(timestampMs: Long) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    Text(
+        "Inspected: " + formatLocalDateTime(context, timestampMs),
+        style = MaterialTheme.typography.labelMedium,
+        color = Steel.TextDim,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.padding(top = 4.dp)
+    )
+}
+
+internal fun formatLocalDateTime(context: android.content.Context, timestampMs: Long): String {
+    val d = java.util.Date(timestampMs)
+    return android.text.format.DateFormat.getMediumDateFormat(context).format(d) + ", " +
+        android.text.format.DateFormat.getTimeFormat(context).format(d)
 }
 
 @Composable
